@@ -3,3 +3,6 @@ module aac-go
 go 1.22
 
 require github.com/Comcast/gaad v1.0.0
+replace (
+	github.com/Comcast/gaad v1.0.0 => ./gaad
+)
