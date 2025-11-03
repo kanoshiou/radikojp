@@ -1,0 +1,100 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Get version
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build for multiple platforms
+        run: |
+          # Windows AMD64
+          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o radiko-windows-amd64.exe
+          
+          # Windows ARM64
+          GOOS=windows GOARCH=arm64 go build -ldflags="-s -w" -o radiko-windows-arm64.exe
+          
+          # Linux AMD64
+          GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o radiko-linux-amd64
+          
+          # Linux ARM64
+          GOOS=linux GOARCH=arm64 go build -ldflags="-s -w" -o radiko-linux-arm64
+          
+          # macOS AMD64
+          GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w" -o radiko-darwin-amd64
+          
+          # macOS ARM64 (Apple Silicon)
+          GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w" -o radiko-darwin-arm64
+
+      - name: Create checksums
+        run: |
+          sha256sum radiko-* > checksums.txt
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            radiko-windows-amd64.exe
+            radiko-windows-arm64.exe
+            radiko-linux-amd64
+            radiko-linux-arm64
+            radiko-darwin-amd64
+            radiko-darwin-arm64
+            checksums.txt
+          body: |
+            ## Radiko JP Player ${{ steps.get_version.outputs.VERSION }}
+            
+            ### 📦 下载
+            
+            选择适合你系统的版本：
+            
+            - **Windows (x64)**: `radiko-windows-amd64.exe`
+            - **Windows (ARM64)**: `radiko-windows-arm64.exe`
+            - **Linux (x64)**: `radiko-linux-amd64`
+            - **Linux (ARM64)**: `radiko-linux-arm64`
+            - **macOS (Intel)**: `radiko-darwin-amd64`
+            - **macOS (Apple Silicon)**: `radiko-darwin-arm64`
+            
+            ### ⚠️ 重要提示
+            
+            **需要安装 ffmpeg**：本程序依赖 ffmpeg 进行音频解码。
+            
+            - Windows: `choco install ffmpeg`
+            - Linux: `sudo apt install ffmpeg`
+            - macOS: `brew install ffmpeg`
+            
+            ### 📖 文档
+            
+            - [安装指南](https://github.com/${{ github.repository }}/blob/main/docs/INSTALL.md)
+            - [使用说明](https://github.com/${{ github.repository }}/blob/main/docs/USAGE.md)
+            - [故障排除](https://github.com/${{ github.repository }}/blob/main/docs/TROUBLESHOOTING.md)
+            
+            ### ✅ 校验和
+            
+            下载后请验证文件完整性，参考 `checksums.txt`
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
