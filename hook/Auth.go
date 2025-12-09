@@ -22,14 +22,14 @@ func Auth(areaID string) string {
 
 	offset, length := auth.offset, auth.length
 
-	// 对fullKeyB64进行Base64解码，得到一个字节切片
+	// Base64 decode fullKeyB64 to get a byte slice
 	fullKeyBin, err := base64.StdEncoding.DecodeString(fullKeyB64)
 	if err != nil {
-		// 处理解码错误
+		// Handle decoding error
 	}
-	// 对fullKeyBin进行切片，得到一个新的字节切片
+	// Slice fullKeyBin to get a new byte slice
 	partial := fullKeyBin[offset : offset+length]
-	// 对partial进行Base64编码，得到一个字符串
+	// Base64 encode partial to get a string
 	partialKey := base64.StdEncoding.EncodeToString(partial)
 
 	auth.partialKey = partialKey
@@ -79,7 +79,7 @@ func auth2(auth authInfo, areaID string) {
 		return
 	}
 
-	// 根据地区生成对应的 GPS 坐标
+	// Generate GPS coordinates based on the area
 	location := model.GenGPS(areaID)
 
 	req.Header.Add("Connection", "keep-alive")
@@ -111,6 +111,6 @@ func auth2(auth authInfo, areaID string) {
 	if err != nil {
 		return
 	}
-	// 静默处理响应，不输出到终端
+	// Silently process response, do not output to terminal
 	_ = body
 }

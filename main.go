@@ -12,18 +12,18 @@ import (
 )
 
 func main() {
-	// 解析命令行参数
+	// Parse command line arguments
 	volumePercent := flag.Int("volume", -1, "Initial volume (0-100), -1 means use saved config")
 	flag.Parse()
 
-	// 加载配置
+	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
-		fmt.Printf("⚠ 加载配置失败，使用默认配置: %v\n", err)
+		fmt.Printf("⚠ 設定の読み込みに失敗しました。デフォルト設定を使用します: %v\n", err)
 		cfg = config.DefaultConfig()
 	}
 
-	// 如果命令行指定了音量，则覆盖配置
+	// If volume is specified via command line, override config
 	if *volumePercent >= 0 {
 		cfg.Volume = float64(*volumePercent) / 100.0
 		if cfg.Volume < 0 {
@@ -33,35 +33,35 @@ func main() {
 		}
 	}
 
-	// 获取认证 token
-	fmt.Println("🔐 正在认证...")
+	// Get authentication token
+	fmt.Println("🔐 認証中...")
 	authToken := hook.Auth(cfg.AreaID)
-	fmt.Println("✓ 认证成功")
+	fmt.Println("✓ 認証成功")
 
-	// 获取电台列表
-	fmt.Printf("📡 正在获取 %s 地区电台列表...\n", cfg.AreaID)
+	// Get station list
+	fmt.Printf("📡 %s 地域の放送局リストを取得中...\n", cfg.AreaID)
 	stations, err := api.GetStations(cfg.AreaID)
 	if err != nil {
-		fmt.Printf("❌ 获取电台列表失败: %v\n", err)
+		fmt.Printf("❌ 放送局リストの取得に失敗しました: %v\n", err)
 		os.Exit(1)
 	}
-	fmt.Printf("✓ 发现 %d 个电台\n", len(stations))
+	fmt.Printf("✓ %d 局を検出しました\n", len(stations))
 
 	if len(stations) == 0 {
-		fmt.Println("❌ 没有可用的电台")
+		fmt.Println("❌ 利用可能な放送局がありません")
 		os.Exit(1)
 	}
 
-	// 显示上次播放的电台
+	// Display last played station
 	if cfg.LastStationID != "" {
-		fmt.Printf("📻 上次播放: %s\n", cfg.LastStationID)
+		fmt.Printf("📻 前回再生: %s\n", cfg.LastStationID)
 	}
 
-	// 运行 TUI
-	fmt.Println("🚀 启动界面...")
+	// Run TUI
+	fmt.Println("🚀 インターフェースを起動中...")
 	err = tui.Run(stations, authToken, cfg)
 	if err != nil {
-		fmt.Printf("❌ 界面错误: %v\n", err)
+		fmt.Printf("❌ インターフェースエラー: %v\n", err)
 		os.Exit(1)
 	}
 }

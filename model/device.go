@@ -7,21 +7,21 @@ import (
 	"strings"
 )
 
-// RandomDeviceInfo 随机设备信息
+// RandomDeviceInfo represents random device information
 type RandomDeviceInfo struct {
-	AppVersion string // 应用版本
-	UserID     string // 用户ID
+	AppVersion string // App version
+	UserID     string // User ID
 	UserAgent  string // User-Agent
-	Device     string // 设备标识
+	Device     string // Device identifier
 }
 
-// VersionInfo Android SDK 和构建版本信息
+// VersionInfo contains Android SDK and build version information
 type VersionInfo struct {
 	SDK    string
 	Builds []string
 }
 
-// VERSION_MAP Android 版本映射
+// VERSION_MAP contains Android version mappings
 var VERSION_MAP = map[string]VersionInfo{
 	"7.0.0": {
 		SDK: "24",
@@ -95,7 +95,7 @@ var VERSION_MAP = map[string]VersionInfo{
 	},
 }
 
-// MODEL_LIST 设备型号列表
+// MODEL_LIST contains device model list
 var MODEL_LIST = []string{
 	// Samsung Galaxy S7 Edge
 	"SC-02H", "SCV33", "SM-G935F", "SM-G935X", "SM-G935W8", "SM-G935K",
@@ -142,7 +142,7 @@ var MODEL_LIST = []string{
 	"GB7N6", "G9S9B16", "G1F8F", "G4S1M", "GD1YQ", "GTT9Q",
 }
 
-// APP_VERSIONS Radiko 应用版本列表
+// APP_VERSIONS contains Radiko app version list
 var APP_VERSIONS = []string{
 	"8.0.11", "8.0.10", "8.0.9", "8.0.7", "8.0.6", "8.0.5", "8.0.4",
 	"8.0.3", "8.0.2", "7.5.7", "7.5.6", "7.5.5", "7.5.0", "7.4.17",
@@ -150,7 +150,7 @@ var APP_VERSIONS = []string{
 	"7.4.10", "7.4.5", "7.4.1",
 }
 
-// Coordinates 各地区坐标（按 JP1-JP47 顺序）
+// Coordinates contains coordinates for each area (in JP1-JP47 order)
 var Coordinates = [][]float64{
 	{43.064615, 141.346807}, // JP1 北海道
 	{40.824308, 140.739998}, // JP2 青森
@@ -201,9 +201,9 @@ var Coordinates = [][]float64{
 	{26.2124, 127.680932},   // JP47 沖縄
 }
 
-// GenRandomDeviceInfo 生成随机设备信息
+// GenRandomDeviceInfo generates random device information
 func GenRandomDeviceInfo() RandomDeviceInfo {
-	// 随机选择 Android 版本
+	// Randomly select Android version
 	versions := make([]string, 0, len(VERSION_MAP))
 	for v := range VERSION_MAP {
 		versions = append(versions, v)
@@ -211,22 +211,22 @@ func GenRandomDeviceInfo() RandomDeviceInfo {
 	version := versions[rand.Intn(len(versions))]
 	versionInfo := VERSION_MAP[version]
 
-	// 随机选择 build
+	// Randomly select build
 	build := versionInfo.Builds[rand.Intn(len(versionInfo.Builds))]
 
-	// 随机选择设备型号
+	// Randomly select device model
 	model := MODEL_LIST[rand.Intn(len(MODEL_LIST))]
 
-	// 构建 device 字符串: SDK.MODEL
+	// Build device string: SDK.MODEL
 	device := fmt.Sprintf("%s.%s", versionInfo.SDK, model)
 
-	// 构建 User-Agent: Dalvik/2.1.0 (Linux; U; Android VERSION; MODEL/BUILD)
+	// Build User-Agent: Dalvik/2.1.0 (Linux; U; Android VERSION; MODEL/BUILD)
 	userAgent := fmt.Sprintf("Dalvik/2.1.0 (Linux; U; Android %s; %s/%s)", version, model, build)
 
-	// 随机选择应用版本
+	// Randomly select app version
 	appVersion := APP_VERSIONS[rand.Intn(len(APP_VERSIONS))]
 
-	// 生成随机用户 ID (32位十六进制)
+	// Generate random user ID (32-character hexadecimal)
 	userID := genRandomHexString(32)
 
 	return RandomDeviceInfo{
@@ -237,22 +237,22 @@ func GenRandomDeviceInfo() RandomDeviceInfo {
 	}
 }
 
-// GenGPS 生成指定地区的 GPS 坐标（带随机偏移）
-// areaID 格式为 "JP1" - "JP47"
+// GenGPS generates GPS coordinates for the specified area (with random offset)
+// areaID format: "JP1" - "JP47"
 func GenGPS(areaID string) string {
-	// 解析地区编号
+	// Parse area number
 	areaNum := parseAreaNumber(areaID)
 	if areaNum < 1 || areaNum > 47 {
-		// 默认返回东京坐标
+		// Default to Tokyo coordinates
 		areaNum = 13
 	}
 
-	// 获取基础坐标
+	// Get base coordinates
 	coords := Coordinates[areaNum-1]
 	lat := coords[0]
 	long := coords[1]
 
-	// 添加随机偏移 (+/- 0 ~ 0.025 => 0 ~ 1.5' => +/- 0 ~ 2.77/2.13km)
+	// Add random offset (+/- 0 ~ 0.025 => 0 ~ 1.5' => +/- 0 ~ 2.77/2.13km)
 	latOffset := rand.Float64() / 40.0
 	if rand.Float64() > 0.5 {
 		latOffset = -latOffset
@@ -268,9 +268,9 @@ func GenGPS(areaID string) string {
 	return fmt.Sprintf("%.6f,%.6f,gps", lat, long)
 }
 
-// parseAreaNumber 从 areaID 解析地区编号
+// parseAreaNumber parses the area number from areaID
 func parseAreaNumber(areaID string) int {
-	// 移除 "JP" 前缀
+	// Remove "JP" prefix
 	numStr := strings.TrimPrefix(areaID, "JP")
 	num, err := strconv.Atoi(numStr)
 	if err != nil {
@@ -279,11 +279,11 @@ func parseAreaNumber(areaID string) int {
 	return num
 }
 
-// NewRandomDeviceInfo 使用自定义参数创建 RandomDeviceInfo
-// appVersion: 应用版本，如 "7.4.10"
-// userID: 用户ID，32位十六进制字符串
-// userAgent: User-Agent 字符串
-// device: 设备标识，如 "29.SM-N950N"
+// NewRandomDeviceInfo creates a RandomDeviceInfo with custom parameters
+// appVersion: app version, e.g., "7.4.10"
+// userID: user ID, 32-character hexadecimal string
+// userAgent: User-Agent string
+// device: device identifier, e.g., "29.SM-N950N"
 func NewRandomDeviceInfo(appVersion, userID, userAgent, device string) RandomDeviceInfo {
 	return RandomDeviceInfo{
 		AppVersion: appVersion,
@@ -293,7 +293,7 @@ func NewRandomDeviceInfo(appVersion, userID, userAgent, device string) RandomDev
 	}
 }
 
-// genRandomHexString 生成指定长度的随机十六进制字符串
+// genRandomHexString generates a random hexadecimal string of specified length
 func genRandomHexString(length int) string {
 	const hex = "0123456789abcdef"
 	result := make([]byte, length)

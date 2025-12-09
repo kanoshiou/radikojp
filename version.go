@@ -3,14 +3,14 @@ package main
 import "fmt"
 
 var (
-	// Version 程序版本（由构建时注入）
+	// Version is the program version (injected at build time)
 	Version = "dev"
 	
-	// BuildTime 构建时间（由构建时注入）
+	// BuildTime is the build time (injected at build time)
 	BuildTime = "unknown"
 )
 
-// PrintVersion 打印版本信息
+// PrintVersion prints version information
 func PrintVersion() {
 	fmt.Println("Radiko JP Player")
 	fmt.Printf("Version: %s\n", Version)

@@ -16,7 +16,7 @@ const (
 	StreamURLFmt      = "https://radiko.jp/v3/station/stream/pc_html5/%s.xml"
 )
 
-// GetStations 获取指定地区的电台列表
+// GetStations retrieves the list of stations for a specified area
 func GetStations(areaID string) ([]model.Station, error) {
 	url := fmt.Sprintf(StationListURLFmt, areaID)
 	resp, err := http.Get(url)
@@ -78,12 +78,12 @@ func GetStreamURLs(stationID string) ([]string, error) {
 	return urls, nil
 }
 
-// ProgramURLFmt 节目信息 API URL 格式
+// ProgramURLFmt is the program info API URL format
 const ProgramURLFmt = "https://api.radiko.jp/program/v4/date/%s/station/%s.json"
 
-// GetCurrentProgram 获取电台当前节目
+// GetCurrentProgram retrieves the current program for a station
 func GetCurrentProgram(stationID string) (*model.Program, error) {
-	// 使用日本时区 (UTC+9)
+	// Use Japan timezone (UTC+9)
 	jst := time.FixedZone("JST", 9*60*60)
 	now := time.Now().In(jst)
 	dateStr := now.Format("20060102")
@@ -110,11 +110,11 @@ func GetCurrentProgram(stationID string) (*model.Program, error) {
 		return nil, err
 	}
 
-	// 查找当前时间的节目
+	// Find the program for the current time
 	for _, station := range progResp.Stations {
 		if station.StationID == stationID {
 			for _, prog := range station.Programs.Program {
-				// 检查当前时间是否在节目时间范围内
+				// Check if current time is within the program's time range
 				if prog.Ft <= timeStr && timeStr < prog.To {
 					return &prog, nil
 				}

@@ -16,7 +16,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// FocusMode 焦点模式
+// FocusMode represents the current focus area
 type FocusMode int
 
 const (
@@ -24,7 +24,7 @@ const (
 	FocusRegion
 )
 
-// KeyMap 快捷键
+// KeyMap defines keyboard shortcuts
 type KeyMap struct {
 	Up        key.Binding
 	Down      key.Binding
@@ -50,19 +50,19 @@ func (k KeyMap) FullHelp() [][]key.Binding {
 }
 
 var DefaultKeyMap = KeyMap{
-	Up:        key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑", "上移")),
-	Down:      key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓", "下移")),
+	Up:        key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑", "上へ")),
+	Down:      key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓", "下へ")),
 	Left:      key.NewBinding(key.WithKeys("left", "h"), key.WithHelp("←", "左")),
 	Right:     key.NewBinding(key.WithKeys("right", "l"), key.WithHelp("→", "右")),
-	Select:    key.NewBinding(key.WithKeys("enter", " "), key.WithHelp("Enter", "选择")),
+	Select:    key.NewBinding(key.WithKeys("enter", " "), key.WithHelp("Enter", "選択")),
 	VolUp:     key.NewBinding(key.WithKeys("+", "="), key.WithHelp("+", "音量+")),
 	VolDown:   key.NewBinding(key.WithKeys("-", "_"), key.WithHelp("-", "音量-")),
-	Mute:      key.NewBinding(key.WithKeys("m"), key.WithHelp("m", "静音")),
-	Reconnect: key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "重连")),
-	Quit:      key.NewBinding(key.WithKeys("ctrl+c", "esc"), key.WithHelp("Esc", "退出/返回")),
+	Mute:      key.NewBinding(key.WithKeys("m"), key.WithHelp("m", "ミュート")),
+	Reconnect: key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "再接続")),
+	Quit:      key.NewBinding(key.WithKeys("ctrl+c", "esc"), key.WithHelp("Esc", "終了/戻る")),
 }
 
-// 样式
+// Styles
 var (
 	primaryColor   = lipgloss.Color("#7C3AED")
 	secondaryColor = lipgloss.Color("#10B981")
@@ -73,32 +73,32 @@ var (
 	regionColor    = lipgloss.Color("#89B4FA")
 	warningColor   = lipgloss.Color("#FAB387")
 
-	titleStyle              = lipgloss.NewStyle().Foreground(primaryColor).Bold(true)
-	regionItemStyle         = lipgloss.NewStyle().Foreground(textColor)
-	regionSelectedStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("#1E1E2E")).Background(regionColor).Bold(true).Padding(0, 1)
-	regionCurrentStyle      = lipgloss.NewStyle().Foreground(secondaryColor).Bold(true)
-	stationNameStyle        = lipgloss.NewStyle().Foreground(textColor)
-	stationIDStyle          = lipgloss.NewStyle().Foreground(dimTextColor)
-	stationSelectedStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("#1E1E2E")).Background(primaryColor).Bold(true).Padding(0, 1)
-	stationPlayingStyle     = lipgloss.NewStyle().Foreground(playingColor).Bold(true)
+	titleStyle                  = lipgloss.NewStyle().Foreground(primaryColor).Bold(true)
+	regionItemStyle             = lipgloss.NewStyle().Foreground(textColor)
+	regionSelectedStyle         = lipgloss.NewStyle().Foreground(lipgloss.Color("#1E1E2E")).Background(regionColor).Bold(true).Padding(0, 1)
+	regionCurrentStyle          = lipgloss.NewStyle().Foreground(secondaryColor).Bold(true)
+	stationNameStyle            = lipgloss.NewStyle().Foreground(textColor)
+	stationIDStyle              = lipgloss.NewStyle().Foreground(dimTextColor)
+	stationSelectedStyle        = lipgloss.NewStyle().Foreground(lipgloss.Color("#1E1E2E")).Background(primaryColor).Bold(true).Padding(0, 1)
+	stationPlayingStyle         = lipgloss.NewStyle().Foreground(playingColor).Bold(true)
 	stationSelectedPlayingStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#1E1E2E")).Background(secondaryColor).Bold(true).Padding(0, 1)
-	statusStyle             = lipgloss.NewStyle().Foreground(dimTextColor)
-	errorStyle              = lipgloss.NewStyle().Foreground(lipgloss.Color("#F38BA8"))
-	volumeStyle             = lipgloss.NewStyle().Foreground(accentColor)
-	focusIndicatorStyle     = lipgloss.NewStyle().Foreground(accentColor).Bold(true)
-	programStyle            = lipgloss.NewStyle().Foreground(lipgloss.Color("#CBA6F7"))
-	nowPlayingStyle         = lipgloss.NewStyle().Foreground(playingColor).Bold(true)
-	reconnectStyle          = lipgloss.NewStyle().Foreground(warningColor)
+	statusStyle                 = lipgloss.NewStyle().Foreground(dimTextColor)
+	errorStyle                  = lipgloss.NewStyle().Foreground(lipgloss.Color("#F38BA8"))
+	volumeStyle                 = lipgloss.NewStyle().Foreground(accentColor)
+	focusIndicatorStyle         = lipgloss.NewStyle().Foreground(accentColor).Bold(true)
+	programStyle                = lipgloss.NewStyle().Foreground(lipgloss.Color("#CBA6F7"))
+	nowPlayingStyle             = lipgloss.NewStyle().Foreground(playingColor).Bold(true)
+	reconnectStyle              = lipgloss.NewStyle().Foreground(warningColor)
 )
 
-// PlayingInfo 保存正在播放的电台信息
+// PlayingInfo holds information about the currently playing station
 type PlayingInfo struct {
 	StationID      string
 	StationName    string
 	CurrentProgram string
 }
 
-// SharedState 共享状态
+// SharedState holds shared state between components
 type SharedState struct {
 	Player        *player.FFmpegPlayer
 	AuthToken     string
@@ -108,7 +108,7 @@ type SharedState struct {
 	Playing       *PlayingInfo
 }
 
-// Model TUI 模型
+// Model is the TUI model
 type Model struct {
 	stations      []model.Station
 	cursor        int
@@ -128,7 +128,7 @@ type Model struct {
 	focus        FocusMode
 }
 
-// 消息类型
+// Message types
 type autoPlayMsg struct{}
 type stationsLoadedMsg struct {
 	stations []model.Station
@@ -240,19 +240,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tickMsg:
-		// 检查重连状态
+		// Check reconnection status
 		if m.shared.Player != nil {
 			status := m.shared.Player.GetReconnectStatus()
 			if status == player.ReconnectSuccess {
-				m.statusMessage = "重连成功"
+				m.statusMessage = "再接続成功"
 				m.shared.Player.ClearReconnectStatus()
 			} else if status == player.ReconnectFailed {
-				m.errorMessage = "重连失败: " + m.shared.Player.GetLastError()
+				m.errorMessage = "再接続失敗: " + m.shared.Player.GetLastError()
 				m.shared.Player.ClearReconnectStatus()
 			}
 		}
-		
-		// 每30秒刷新一次节目信息
+
+		// Refresh program info every 30 seconds
 		var cmd tea.Cmd
 		if m.shared.Playing != nil && time.Now().Second()%30 == 0 {
 			cmd = fetchProgramCmd(m.shared.Playing.StationID)
@@ -276,19 +276,19 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case stationsLoadedMsg:
 		m.isLoading = false
 		if msg.err != nil {
-			m.errorMessage = fmt.Sprintf("加载失败: %v", msg.err)
+			m.errorMessage = fmt.Sprintf("読み込み失敗: %v", msg.err)
 		} else {
 			m.stations = msg.stations
 			m.shared.CurrentAreaID = m.getCurrentAreaID()
 			m.cursor = 0
-			m.statusMessage = fmt.Sprintf("已切换到 %s", m.getCurrentAreaName())
+			m.statusMessage = fmt.Sprintf("%s に切り替えました", m.getCurrentAreaName())
 			m.saveAreaConfig()
 		}
 		return m, nil
 
 	case playResultMsg:
 		if msg.err != nil {
-			m.errorMessage = fmt.Sprintf("播放失败: %v", msg.err)
+			m.errorMessage = fmt.Sprintf("再生失敗: %v", msg.err)
 			m.statusMessage = ""
 		} else {
 			m.shared.Playing = &PlayingInfo{
@@ -304,9 +304,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case reconnectResultMsg:
 		if msg.err != nil {
-			m.errorMessage = fmt.Sprintf("重连失败: %v", msg.err)
+			m.errorMessage = fmt.Sprintf("再接続失敗: %v", msg.err)
 		} else {
-			m.statusMessage = "重连成功"
+			m.statusMessage = "再接続成功"
 		}
 		return m, nil
 
@@ -460,7 +460,7 @@ func (m *Model) getCurrentAreaName() string {
 
 func (m *Model) loadStationsForCurrentArea() tea.Cmd {
 	m.isLoading = true
-	m.statusMessage = fmt.Sprintf("加载 %s ...", m.getCurrentAreaName())
+	m.statusMessage = fmt.Sprintf("%s を読み込み中...", m.getCurrentAreaName())
 	areaID := m.getCurrentAreaID()
 	return func() tea.Msg {
 		stations, err := api.GetStations(areaID)
@@ -501,7 +501,7 @@ func (m *Model) playStation() tea.Cmd {
 			return playResultMsg{err: err, stationIdx: stationIdx}
 		}
 		if len(playlistURLs) == 0 {
-			return playResultMsg{err: fmt.Errorf("无可用流"), stationIdx: stationIdx}
+			return playResultMsg{err: fmt.Errorf("利用可能なストリームがありません"), stationIdx: stationIdx}
 		}
 
 		lsid := "5e586af5ccb3b0b2498abfb19eaa8472"
@@ -510,8 +510,8 @@ func (m *Model) playStation() tea.Cmd {
 
 		shared.Player.Stop()
 		time.Sleep(100 * time.Millisecond)
-		
-		// 使用已有的 token，不重新获取
+
+		// Use existing token, don't re-authenticate
 		err = shared.Player.Play(finalStreamUrl)
 		return playResultMsg{
 			err:         err,
@@ -528,23 +528,23 @@ func (m *Model) reconnect() tea.Cmd {
 		if shared.Player != nil {
 			return reconnectResultMsg{err: shared.Player.Reconnect()}
 		}
-		return reconnectResultMsg{err: fmt.Errorf("播放器未初始化")}
+		return reconnectResultMsg{err: fmt.Errorf("プレーヤーが初期化されていません")}
 	}
 }
 
-// View 渲染 - 固定底部布局
+// View renders the UI - fixed bottom layout
 func (m Model) View() string {
-	// 计算可用高度
+	// Calculate available height
 	totalHeight := m.height
 	if totalHeight == 0 {
-		totalHeight = 24 // 默认高度
+		totalHeight = 24 // Default height
 	}
 
-	// 固定区域高度
-	headerHeight := 3  // 标题 + 地区 + 分隔线
-	footerHeight := 3  // 分隔线 + 播放信息 + 帮助
-	
-	// 内容区域高度
+	// Fixed region heights
+	headerHeight := 3 // Title + Region + Separator
+	footerHeight := 3 // Separator + Playing info + Help
+
+	// Content area height
 	contentHeight := totalHeight - headerHeight - footerHeight
 	if contentHeight < 5 {
 		contentHeight = 5
@@ -552,34 +552,34 @@ func (m Model) View() string {
 
 	var content strings.Builder
 
-	// === 头部 ===
-	// 标题 + 音量
+	// === Header ===
+	// Title + Volume
 	title := titleStyle.Render("📻 Radiko")
 	volBar := m.renderVolume()
 	content.WriteString(fmt.Sprintf("%s  %s\n", title, volBar))
 
-	// 地区行
+	// Region line
 	content.WriteString(m.renderRegionLine() + "\n")
 	content.WriteString(strings.Repeat("─", 50) + "\n")
 
-	// === 内容区域 ===
+	// === Content area ===
 	contentLines := m.renderContent(contentHeight)
 	content.WriteString(contentLines)
 
-	// 填充空行使底部固定
+	// Pad with empty lines to fix bottom position
 	currentLines := strings.Count(content.String(), "\n")
 	targetLines := totalHeight - footerHeight
 	for i := currentLines; i < targetLines; i++ {
 		content.WriteString("\n")
 	}
 
-	// === 底部固定区域 ===
+	// === Fixed bottom area ===
 	content.WriteString(m.renderFooter())
 
 	return content.String()
 }
 
-// renderContent 渲染内容区域
+// renderContent renders the content area
 func (m Model) renderContent(maxHeight int) string {
 	var lines []string
 
@@ -588,8 +588,8 @@ func (m Model) renderContent(maxHeight int) string {
 		return strings.Join(lines, "\n") + "\n"
 	}
 
-	// 电台列表
-	maxVisible := maxHeight - 2 // 留出状态消息空间
+	// Station list
+	maxVisible := maxHeight - 2 // Leave space for status messages
 	if maxVisible > len(m.stations) {
 		maxVisible = len(m.stations)
 	}
@@ -611,7 +611,7 @@ func (m Model) renderContent(maxHeight int) string {
 	}
 
 	if startIdx > 0 {
-		lines = append(lines, statusStyle.Render("  ↑ 更多"))
+		lines = append(lines, statusStyle.Render("  ↑ さらに表示"))
 	}
 
 	for i := startIdx; i < endIdx; i++ {
@@ -641,10 +641,10 @@ func (m Model) renderContent(maxHeight int) string {
 	}
 
 	if endIdx < len(m.stations) {
-		lines = append(lines, statusStyle.Render("  ↓ 更多"))
+		lines = append(lines, statusStyle.Render("  ↓ さらに表示"))
 	}
 
-	// 状态/错误消息
+	// Status/Error messages
 	if m.errorMessage != "" {
 		lines = append(lines, errorStyle.Render("✗ "+m.errorMessage))
 	} else if m.statusMessage != "" {
@@ -654,41 +654,41 @@ func (m Model) renderContent(maxHeight int) string {
 	return strings.Join(lines, "\n") + "\n"
 }
 
-// renderFooter 渲染固定底部
+// renderFooter renders the fixed bottom area
 func (m Model) renderFooter() string {
 	var lines []string
-	
+
 	lines = append(lines, strings.Repeat("─", 50))
 
-	// 播放信息 + 重连状态
+	// Playing info + Reconnection status
 	var playLine string
 	if m.shared.Playing != nil {
 		playLine = nowPlayingStyle.Render("▶ ") + m.shared.Playing.StationName + " " + stationIDStyle.Render(m.shared.Playing.StationID)
 		if m.shared.Playing.CurrentProgram != "" {
 			playLine += "  " + programStyle.Render("♪ "+m.shared.Playing.CurrentProgram)
 		}
-		
-		// 检查重连状态
+
+		// Check reconnection status
 		if m.shared.Player != nil {
 			switch m.shared.Player.GetReconnectStatus() {
 			case player.ReconnectStarted:
-				playLine += "  " + reconnectStyle.Render("🔄 重连中...")
+				playLine += "  " + reconnectStyle.Render("🔄 再接続中...")
 			case player.ReconnectAuth:
-				playLine += "  " + reconnectStyle.Render("🔑 获取认证...")
+				playLine += "  " + reconnectStyle.Render("🔑 認証取得中...")
 			case player.ReconnectPlaying:
-				playLine += "  " + reconnectStyle.Render("▶ 恢复播放...")
+				playLine += "  " + reconnectStyle.Render("▶ 再生を再開中...")
 			}
 		}
 	} else {
-		playLine = statusStyle.Render("未播放")
+		playLine = statusStyle.Render("再生していません")
 	}
 	lines = append(lines, playLine)
 
-	// 帮助
+	// Help
 	if m.focus == FocusRegion {
-		lines = append(lines, statusStyle.Render("← → 选择  Enter 确认  ↓/Esc 返回"))
+		lines = append(lines, statusStyle.Render("← → 選択  Enter 確定  ↓/Esc 戻る"))
 	} else {
-		lines = append(lines, statusStyle.Render("↑↓ 选择  Enter 播放  ←→ 切地区  +- 音量  m 静音  r 重连  Esc 退出"))
+		lines = append(lines, statusStyle.Render("↑↓ 選択  Enter 再生  ←→ 地域切替  +- 音量  m ミュート  r 再接続  Esc 終了"))
 	}
 
 	return strings.Join(lines, "\n")

@@ -1,65 +1,122 @@
-# 安装指南
+# Installation Guide
 
-## 系统要求
+## System Requirements
 
-- **操作系统**: Windows 10+, Linux, macOS
-- **Go 版本**: 1.18 或更高
-- **ffmpeg**: 必需
+- **Operating System**: Windows 10+, Linux, macOS
+- **ffmpeg**: Required (for audio decoding)
+- **Go 1.18+**: Only needed if building from source
 
-## 快速安装
+## Quick Installation
 
-### 1. 安装 ffmpeg
+### Option 1: Download Pre-built Binary (Recommended)
 
-#### Windows
-```powershell
-# 使用 Chocolatey
-choco install ffmpeg
+1. Go to [Releases](https://github.com/kanoshiou/radikojp/releases)
+2. Download the appropriate file for your OS:
+   - Windows: `radikojp-windows-amd64.exe`
+   - Linux: `radikojp-linux-amd64`
+   - macOS: `radikojp-darwin-amd64`
+3. Make it executable (Linux/macOS): `chmod +x radikojp-*`
+4. Run the program
 
-# 验证
-ffmpeg -version
-```
-
-#### Linux
-```bash
-# Ubuntu/Debian
-sudo apt update && sudo apt install ffmpeg
-
-# 验证
-ffmpeg -version
-```
-
-#### macOS
-```bash
-# 使用 Homebrew
-brew install ffmpeg
-
-# 验证
-ffmpeg -version
-```
-
-### 2. 下载并运行
-
-从 [Releases](https://github.com/your-repo/radikojp/releases) 页面下载最新版本，或者从源码编译：
+### Option 2: Build from Source
 
 ```bash
-# 克隆项目
-git clone https://github.com/your-repo/radikojp.git
+# Clone the repository
+git clone https://github.com/kanoshiou/radikojp.git
 cd radikojp
 
-# 安装依赖
+# Install dependencies
 go mod tidy
 
-# 编译
+# Build
 go build -o radiko
 
-# 运行
+# Run
 ./radiko
 ```
 
-## 详细说明
+## Installing ffmpeg (Required)
 
-查看完整的安装指南，请参考项目根目录的文档。
+### Windows
+
+**Using Chocolatey:**
+```powershell
+choco install ffmpeg
+```
+
+**Using Scoop:**
+```powershell
+scoop install ffmpeg
+```
+
+**Manual installation:**
+1. Download from https://ffmpeg.org/download.html
+2. Extract to a folder (e.g., `C:\ffmpeg`)
+3. Add to PATH: `C:\ffmpeg\bin`
+
+### Linux
+
+**Ubuntu/Debian:**
+```bash
+sudo apt update
+sudo apt install ffmpeg
+```
+
+**Fedora:**
+```bash
+sudo dnf install ffmpeg
+```
+
+**Arch Linux:**
+```bash
+sudo pacman -S ffmpeg
+```
+
+### macOS
+
+**Using Homebrew:**
+```bash
+brew install ffmpeg
+```
+
+### Verify Installation
+
+```bash
+ffmpeg -version
+```
+
+You should see version information if installed correctly.
+
+## Running the Program
+
+```bash
+# Simple run
+./radiko
+
+# With custom initial volume (0-100)
+./radiko -volume 50
+```
+
+## Troubleshooting Installation
+
+### "ffmpeg not found" error
+- Ensure ffmpeg is installed and in your system PATH
+- Restart your terminal after installing ffmpeg
+- On Windows, you may need to restart your computer
+
+### Build errors
+```bash
+# Clean module cache and retry
+go clean -modcache
+go mod tidy
+go build
+```
+
+### Permission denied (Linux/macOS)
+```bash
+chmod +x ./radiko
+```
 
 ---
 
-**需要帮助？** 查看 [故障排除](TROUBLESHOOTING.md)
+**Need more help?** See [Troubleshooting](TROUBLESHOOTING.md)

@@ -1,145 +1,185 @@
-# 架构说明
+# Architecture
 
-## 项目结构
+## Project Structure
 
 ```
 radikojp/
 ├── .github/
 │   └── workflows/
-│       └── release.yml      # GitHub Actions 自动发布
-├── docs/                    # 文档目录
-│   ├── INSTALL.md          # 安装指南
-│   ├── USAGE.md            # 使用说明
-│   ├── TROUBLESHOOTING.md  # 故障排除
-│   └── ARCHITECTURE.md     # 架构说明（本文件）
+│       └── release.yml       # GitHub Actions auto-release
+├── api/
+│   └── client.go             # Radiko API client
+├── config/
+│   └── config.go             # Configuration management
+├── docs/                     # Documentation directory
+│   ├── INSTALL.md            # Installation guide
+│   ├── USAGE.md              # Usage guide
+│   ├── TROUBLESHOOTING.md    # Troubleshooting
+│   └── ARCHITECTURE.md       # Architecture (this file)
 ├── hook/
-│   └── Auth.go             # Radiko 认证模块
+│   └── Auth.go               # Radiko authentication module
 ├── model/
-│   └── authtoken.go        # 数据模型
+│   ├── authtoken.go          # Auth token model
+│   ├── device.go             # Device info and GPS generation
+│   ├── program.go            # Program data models
+│   ├── region.go             # Region/Area definitions
+│   └── station.go            # Station data models
 ├── player/
-│   └── ffmpeg_player.go    # FFmpeg 播放器实现
-├── main.go                 # 主程序入口
-├── version.go              # 版本信息
-├── config.example.go       # 配置示例
-├── go.mod                  # Go 模块定义
-├── Makefile                # 构建脚本
-├── README.md               # 项目说明
-├── LICENSE                 # MIT 许可证
-├── CHANGELOG.md            # 变更日志
-└── CONTRIBUTING.md         # 贡献指南
+│   └── ffmpeg_player.go      # FFmpeg-based audio player
+├── tui/
+│   └── tui.go                # Terminal UI (bubbletea)
+├── main.go                   # Main program entry
+├── version.go                # Version information
+├── config.example.go         # Configuration example
+├── go.mod                    # Go module definition
+├── Makefile                  # Build script
+├── README.md                 # Project description (English)
+├── README.ja.md              # Project description (Japanese)
+├── README.zh.md              # Project description (Chinese)
+└── LICENSE                   # MIT License
 ```
 
-## 技术架构
+## Technical Architecture
 
 ```
-┌─────────────────────────────────────────────┐
-│           Radiko JP Player                  │
-├─────────────────────────────────────────────┤
-│                                             │
-│  ┌──────────┐    ┌──────────┐             │
-│  │  认证模块  │───→│ Token 管理│             │
-│  └──────────┘    └──────────┘             │
-│        │                                    │
-│        ↓                                    │
-│  ┌──────────┐    ┌──────────┐             │
-│  │ HLS 解析  │───→│ 流选择    │             │
-│  └──────────┘    └──────────┘             │
-│        │                                    │
-│        ↓                                    │
-│  ┌──────────┐    ┌──────────┐             │
-│  │  ffmpeg  │───→│ AAC 解码  │             │
-│  │  (外部)   │    │  → PCM    │             │
-│  └──────────┘    └──────────┘             │
-│        │                                    │
-│        ↓                                    │
-│  ┌──────────┐    ┌──────────┐             │
-│  │ oto 播放器│───→│  扬声器   │             │
-│  │  (Go)    │    │          │             │
-│  └──────────┘    └──────────┘             │
-│                                             │
-└─────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────┐
+│              Radiko JP Player                       │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  ┌──────────────┐    ┌──────────────┐              │
+│  │   TUI        │◄──►│   Config     │              │
+│  │  (bubbletea) │    │   Manager    │              │
+│  └──────────────┘    └──────────────┘              │
+│         │                                           │
+│         ▼                                           │
+│  ┌──────────────┐    ┌──────────────┐              │
+│  │ Auth Module  │───►│    Token     │              │
+│  │  (auth1/2)   │    │   Manager    │              │
+│  └──────────────┘    └──────────────┘              │
+│         │                                           │
+│         ▼                                           │
+│  ┌──────────────┐    ┌──────────────┐              │
+│  │  API Client  │───►│   Stream     │              │
+│  │ (stations)   │    │   Selector   │              │
+│  └──────────────┘    └──────────────┘              │
+│         │                                           │
+│         ▼                                           │
+│  ┌──────────────┐    ┌──────────────┐              │
+│  │   ffmpeg     │───►│  AAC→PCM    │              │
+│  │  (external)  │    │   Decoder    │              │
+│  └──────────────┘    └──────────────┘              │
+│         │                                           │
+│         ▼                                           │
+│  ┌──────────────┐    ┌──────────────┐              │
+│  │  oto Player  │───►│   Speaker    │              │
+│  │    (Go)      │    │              │              │
+│  └──────────────┘    └──────────────┘              │
+│                                                     │
+└─────────────────────────────────────────────────────┘
 ```
 
-## 核心模块
+## Core Modules
 
-### 1. 认证模块 (hook/Auth.go)
+### 1. Authentication Module (hook/Auth.go)
 
-负责 Radiko 的认证流程：
-- auth1: 获取初始 token
-- auth2: 验证并激活 token
+Handles Radiko's two-step authentication:
+- **auth1**: Obtains initial token, key offset, and length
+- **auth2**: Validates token with partial key and GPS location
+- Supports all 47 Japanese prefectures via GPS spoofing
 
-### 2. 播放器模块 (player/ffmpeg_player.go)
+### 2. API Client (api/client.go)
 
-使用 ffmpeg 解码 AAC 音频：
-- 创建 ffmpeg 子进程
-- 通过管道传输 PCM 数据
-- 使用 oto 库输出音频
+Communicates with Radiko services:
+- `GetStations()`: Fetches station list for a region
+- `GetStreamURLs()`: Gets streaming URLs for a station
+- `GetCurrentProgram()`: Retrieves current program info
 
-### 3. 主程序 (main.go)
+### 3. Player Module (player/ffmpeg_player.go)
 
-协调各个模块：
-- 获取认证
-- 解析播放列表
-- 启动播放器
-- 处理信号
+FFmpeg-based audio player with:
+- Real-time AAC to PCM decoding
+- Software volume control
+- Mute functionality
+- Auto-reconnection on stream failure
+- Reconnection status tracking
 
-## 数据流
+### 4. TUI Module (tui/tui.go)
+
+Interactive terminal interface using bubbletea:
+- Station list with scroll support
+- Region selector (47 prefectures)
+- Real-time volume display
+- Current program display
+- Keyboard navigation
+
+### 5. Configuration (config/config.go)
+
+Persistent user preferences:
+- Last played station
+- Volume level
+- Selected region
+- Auto-saved on changes
+
+### 6. Region/Device Models (model/)
+
+- **region.go**: All 47 Japanese prefectures with IDs
+- **device.go**: Random Android device generation for auth
+- **program.go**: Program schedule data structures
+
+## Data Flow
 
 ```
-Radiko API
-    ↓ (HTTP + Auth Token)
-HLS Playlist (m3u8)
-    ↓ (解析)
-Stream URL
-    ↓ (HTTP + Auth Token)
-AAC Audio Stream
-    ↓ (ffmpeg 解码)
-PCM Audio Data
-    ↓ (oto 播放)
-扬声器输出
+User Input (TUI)
+    ↓
+Region Selection → Auth Module (GPS spoofing)
+    ↓
+API Client → Station List
+    ↓
+User selects station
+    ↓
+API Client → Stream URLs
+    ↓
+FFmpeg Player ← HLS Stream (with auth token)
+    ↓
+AAC Decoding → PCM
+    ↓
+oto Library → Audio Output
 ```
 
-## 依赖关系
+## Dependencies
 
-### Go 依赖
-- `gohlslib`: HLS 播放列表解析
-- `oto/v2`: 跨平台音频输出
-- `beep`: 音频处理工具
+### Go Dependencies
+- `github.com/charmbracelet/bubbletea`: TUI framework
+- `github.com/charmbracelet/lipgloss`: Terminal styling
+- `github.com/charmbracelet/bubbles`: UI components
+- `github.com/ebitengine/oto/v3`: Audio output
 
-### 外部依赖
-- `ffmpeg`: AAC 音频解码
+### External Dependencies
+- `ffmpeg`: AAC audio decoding (required at runtime)
 
-## 并发模型
+## Concurrency Model
 
-- 主 goroutine: 处理用户输入和信号
-- 播放 goroutine: 管理 ffmpeg 进程和音频输出
-- ffmpeg 进程: 独立进程，通过管道通信
+- **Main goroutine**: TUI event loop
+- **Audio pump goroutine**: Reads PCM from ffmpeg, writes to oto
+- **Monitor goroutine**: Detects stream failures, triggers reconnect
+- **ffmpeg process**: External process, communicates via stdout pipe
 
-## 错误处理
+## Error Handling
 
-- 认证失败: 打印错误并退出
-- 网络错误: 打印错误并退出
-- ffmpeg 错误: 打印错误并清理资源
-- 用户中断: 优雅关闭所有资源
+- **Authentication failure**: Displays error in TUI, allows retry
+- **Network error**: Auto-reconnects with new auth token
+- **ffmpeg error**: Cleans up resources, shows error message
+- **User interrupt**: Gracefully stops player and exits
 
-## 性能考虑
+## Configuration Storage
 
-- **内存**: ~20-30MB
-- **CPU**: 5-15% (包括 ffmpeg)
-- **网络**: ~128kbps
-- **延迟**: 2-3秒启动延迟
+Config file location:
+- **Windows**: `%APPDATA%\radikojp\config.json`
+- **Linux/macOS**: `~/.config/radikojp/config.json`
 
-## 未来改进
+## Performance
 
-1. **纯 Go AAC 解码器**: 移除 ffmpeg 依赖
-2. **缓冲优化**: 改进缓冲策略
-3. **错误恢复**: 自动重连机制
-4. **多电台支持**: 命令行参数选择电台
-5. **GUI**: 图形界面
-
-## 参考资料
-
-- [Radiko API](https://radiko.jp)
-- [HLS 协议](https://datatracker.ietf.org/doc/html/rfc8216)
-- [AAC 格式](https://wiki.multimedia.cx/index.php/ADTS)
-- [oto 文档](https://pkg.go.dev/github.com/hajimehoshi/oto/v2)
+- **Memory**: ~20-30MB
+- **CPU**: 5-15% (including ffmpeg)
+- **Network**: ~128kbps (AAC stream)
+- **Startup**: 2-3 seconds (auth + initial stream)

@@ -1,19 +1,19 @@
 package model
 
-// Area 表示一个地区（如 "JP13" = "東京"）
+// Area represents an area (e.g., "JP13" = "Tokyo")
 type Area struct {
-	ID   string // 例如 "JP13"
-	Name string // 例如 "東京"
+	ID   string // e.g., "JP13"
+	Name string // e.g., "東京"
 }
 
-// Region 表示一个大区（如 "関東"）
+// Region represents a larger region (e.g., "Kanto")
 type Region struct {
-	ID    string // 例如 "kanto"
-	Name  string // 例如 "関東"
-	Areas []Area // 该大区下的所有地区
+	ID    string // e.g., "kanto"
+	Name  string // e.g., "関東"
+	Areas []Area // All areas under this region
 }
 
-// AllRegions 所有大区列表
+// AllRegions contains all regions
 var AllRegions = []Region{
 	{
 		ID:   "hokkaido-tohoku",
@@ -106,7 +106,7 @@ var AllRegions = []Region{
 	},
 }
 
-// AllAreas 获取所有地区的平铺列表
+// AllAreas returns a flattened list of all areas
 func AllAreas() []Area {
 	var areas []Area
 	for _, region := range AllRegions {
@@ -115,7 +115,7 @@ func AllAreas() []Area {
 	return areas
 }
 
-// FindAreaByID 根据 ID 查找地区
+// FindAreaByID finds an area by its ID
 func FindAreaByID(areaID string) *Area {
 	for _, region := range AllRegions {
 		for _, area := range region.Areas {
@@ -127,7 +127,7 @@ func FindAreaByID(areaID string) *Area {
 	return nil
 }
 
-// FindRegionByAreaID 根据地区 ID 查找所属大区
+// FindRegionByAreaID finds the region that contains the given area ID
 func FindRegionByAreaID(areaID string) *Region {
 	for i, region := range AllRegions {
 		for _, area := range region.Areas {
@@ -139,7 +139,7 @@ func FindRegionByAreaID(areaID string) *Region {
 	return nil
 }
 
-// GetAreaIndex 获取地区在平铺列表中的索引
+// GetAreaIndex returns the index of an area in the flattened list
 func GetAreaIndex(areaID string) int {
 	areas := AllAreas()
 	for i, area := range areas {
@@ -150,5 +150,5 @@ func GetAreaIndex(areaID string) int {
 	return -1
 }
 
-// DefaultAreaID 默认地区 ID
-const DefaultAreaID = "JP13" // 東京
+// DefaultAreaID is the default area ID
+const DefaultAreaID = "JP13" // Tokyo

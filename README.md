@@ -1,123 +1,111 @@
 # Radiko JP Player
 
-一个用 Go 语言编写的 Radiko 日本网络电台播放器。
+A Radiko Japanese internet radio player written in Go with an interactive TUI.
 
-[![Release](https://img.shields.io/github/v/release/your-username/radikojp)](https://github.com/your-username/radikojp/releases)
-[![Go Version](https://img.shields.io/github/go-mod/go-version/your-username/radikojp)](https://go.dev/)
-[![License](https://img.shields.io/github/license/your-username/radikojp)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/kanoshiou/radikojp)](https://github.com/kanoshiou/radikojp/releases)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/kanoshiou/radikojp)](https://go.dev/)
+[![License](https://img.shields.io/github/license/kanoshiou/radikojp)](LICENSE)
 
-## ✨ 功能特性
+## ✨ Features
 
-- ✅ 支持 Radiko 认证
-- ✅ 解析 HLS 播放列表
-- ✅ 实时流式播放
-- ✅ 跨平台支持（Windows/Linux/macOS）
-- ✅ 使用 Go 原生音频输出库
+- 🎵 Stream live Radiko radio stations
+- 🗾 Support for all 47 Japanese prefectures
+- 🖥️ Interactive terminal UI (TUI)
+- 🔊 Volume control with mute support
+- 🔄 Auto-reconnect on stream failure
+- 💾 Remembers last station and settings
+- 🌏 Cross-platform (Windows/Linux/macOS)
 
-## 📦 安装
+## 📸 Screenshot
 
-### 方法 1: 下载预编译版本（推荐）
+```
+📻 Radiko  🔊 80%
+  北海道 青森 岩手 [東京] 神奈川  [13/47]
+──────────────────────────────────────────────
+  TBSラジオ TBS
+▶ 文化放送 QRR
+  ニッポン放送 LFR
+──────────────────────────────────────────────
+▶ 文化放送 QRR  ♪ 大竹まことゴールデンラジオ
+↑↓ 選択  Enter 再生  ←→ 地域切替  Esc 終了
+```
 
-从 [Releases](https://github.com/your-username/radikojp/releases) 页面下载适合你系统的版本。
+## 📦 Installation
 
-### 方法 2: 从源码编译
+### Download Pre-built Binary (Recommended)
+
+Download from [Releases](https://github.com/kanoshiou/radikojp/releases).
+
+### Build from Source
 
 ```bash
-# 克隆项目
-git clone https://github.com/your-username/radikojp.git
+git clone https://github.com/kanoshiou/radikojp.git
 cd radikojp
-
-# 安装依赖
 go mod tidy
-
-# 编译
 go build -o radiko
-
-# 运行
-./radiko
 ```
 
-## ⚠️ 重要提示
+## ⚠️ Requirements
 
-**需要安装 ffmpeg**：本程序使用 ffmpeg 进行 AAC 音频解码。
+**ffmpeg is required** for audio decoding.
 
-### 安装 ffmpeg
-
-**Windows:**
-```powershell
+```bash
+# Windows (Chocolatey)
 choco install ffmpeg
-```
 
-**Linux:**
-```bash
-sudo apt install ffmpeg  # Ubuntu/Debian
-sudo yum install ffmpeg  # CentOS/RHEL
-```
+# Linux (Ubuntu/Debian)
+sudo apt install ffmpeg
 
-**macOS:**
-```bash
+# macOS (Homebrew)
 brew install ffmpeg
 ```
 
-验证安装：
-```bash
-ffmpeg -version
-```
-
-## 🚀 快速开始
+## 🚀 Usage
 
 ```bash
-# 运行程序
 ./radiko
-
-# 停止播放
-按 Ctrl+C
 ```
 
-## 📖 文档
+### Controls
 
-- [安装指南](docs/INSTALL.md)
-- [使用说明](docs/USAGE.md)
-- [故障排除](docs/TROUBLESHOOTING.md)
+| Key | Action |
+|-----|--------|
+| ↑/↓ or k/j | Navigate stations |
+| ←/→ or h/l | Switch regions |
+| Enter/Space | Play station |
+| +/- | Volume up/down |
+| 0-9 | Set volume level |
+| m | Toggle mute |
+| r | Reconnect |
+| Esc | Exit |
 
-## 🏗️ 技术栈
+## 📖 Documentation
 
-- **HLS 处理**: [gohlslib](https://github.com/bluenviron/gohlslib)
-- **音频输出**: [oto](https://github.com/hajimehoshi/oto)
-- **音频解码**: ffmpeg
+- [Installation Guide](docs/INSTALL.md)
+- [Usage Guide](docs/USAGE.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [Architecture](docs/ARCHITECTURE.md)
 
-## 📋 系统要求
+## 🏗️ Tech Stack
 
-- Go 1.18+ （仅编译时需要）
-- ffmpeg （运行时必需）
-- 网络连接
+- **TUI**: [bubbletea](https://github.com/charmbracelet/bubbletea)
+- **Audio**: [oto](https://github.com/ebitengine/oto) + ffmpeg
+- **Styling**: [lipgloss](https://github.com/charmbracelet/lipgloss)
 
-## 🔧 开发
+## 📋 System Requirements
 
-```bash
-# 运行测试
-go test ./...
+- ffmpeg (runtime)
+- Go 1.18+ (build only)
+- Terminal with UTF-8 support
 
-# 格式化代码
-go fmt ./...
+## 🤝 Contributing
 
-# 检查代码
-go vet ./...
-```
+Issues and Pull Requests are welcome!
 
-## 🤝 贡献
+## 📄 License
 
-欢迎提交 Issue 和 Pull Request！
-
-## 📄 许可证
-
-MIT License - 详见 [LICENSE](LICENSE) 文件
-
-## 🙏 致谢
-
-- [gohlslib](https://github.com/bluenviron/gohlslib) - HLS 流处理
-- [oto](https://github.com/hajimehoshi/oto) - 音频输出
+MIT License - See [LICENSE](LICENSE)
 
 ---
 
-**注意**: 本项目仅供学习和个人使用。请遵守 Radiko 的使用条款。
+**Note**: This project is for learning and personal use. Please comply with Radiko's terms of service.

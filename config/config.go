@@ -6,32 +6,32 @@ import (
 	"path/filepath"
 )
 
-// Config 应用配置
+// Config represents application configuration
 type Config struct {
-	LastStationID string  `json:"last_station_id"` // 上次播放的电台ID
-	Volume        float64 `json:"volume"`          // 音量 0.0-1.0
-	AreaID        string  `json:"area_id"`         // 当前地区ID
+	LastStationID string  `json:"last_station_id"` // Last played station ID
+	Volume        float64 `json:"volume"`          // Volume 0.0-1.0
+	AreaID        string  `json:"area_id"`         // Current area ID
 }
 
-// DefaultConfig 默认配置
+// DefaultConfig returns the default configuration
 func DefaultConfig() Config {
 	return Config{
-		LastStationID: "QRR",  // 默认电台
-		Volume:        0.8,    // 默认音量 80%
-		AreaID:        "JP13", // 默认地区：東京
+		LastStationID: "QRR",  // Default station
+		Volume:        0.8,    // Default volume 80%
+		AreaID:        "JP13", // Default area: Tokyo
 	}
 }
 
-// getConfigPath 获取配置文件路径
+// getConfigPath returns the configuration file path
 func getConfigPath() (string, error) {
-	// 获取用户配置目录
+	// Get user config directory
 	configDir, err := os.UserConfigDir()
 	if err != nil {
-		// 如果获取失败，使用当前目录
+		// If failed, use current directory
 		configDir = "."
 	}
 
-	// 创建应用配置目录
+	// Create application config directory
 	appConfigDir := filepath.Join(configDir, "radikojp")
 	if err := os.MkdirAll(appConfigDir, 0755); err != nil {
 		return "", err
@@ -40,7 +40,7 @@ func getConfigPath() (string, error) {
 	return filepath.Join(appConfigDir, "config.json"), nil
 }
 
-// Load 加载配置
+// Load loads the configuration
 func Load() (Config, error) {
 	configPath, err := getConfigPath()
 	if err != nil {
@@ -50,7 +50,7 @@ func Load() (Config, error) {
 	data, err := os.ReadFile(configPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			// 配置文件不存在，返回默认配置
+			// Config file doesn't exist, return default config
 			return DefaultConfig(), nil
 		}
 		return DefaultConfig(), err
@@ -61,14 +61,14 @@ func Load() (Config, error) {
 		return DefaultConfig(), err
 	}
 
-	// 验证音量范围
+	// Validate volume range
 	if cfg.Volume < 0 {
 		cfg.Volume = 0
 	} else if cfg.Volume > 1 {
 		cfg.Volume = 1
 	}
 
-	// 验证地区 ID，如果为空则使用默认值
+	// Validate area ID, use default if empty
 	if cfg.AreaID == "" {
 		cfg.AreaID = "JP13"
 	}
@@ -76,7 +76,7 @@ func Load() (Config, error) {
 	return cfg, nil
 }
 
-// Save 保存配置
+// Save saves the configuration
 func Save(cfg Config) error {
 	configPath, err := getConfigPath()
 	if err != nil {
@@ -91,7 +91,7 @@ func Save(cfg Config) error {
 	return os.WriteFile(configPath, data, 0644)
 }
 
-// SaveConfig 保存配置（电台、音量、地区）
+// SaveConfig saves the configuration (station, volume, area)
 func SaveConfig(stationID string, volume float64, areaID string) error {
 	cfg := Config{
 		LastStationID: stationID,
@@ -101,9 +101,9 @@ func SaveConfig(stationID string, volume float64, areaID string) error {
 	return Save(cfg)
 }
 
-// SaveLastStation 保存上次播放的电台（兼容旧版调用）
+// SaveLastStation saves the last played station (backwards compatible)
 func SaveLastStation(stationID string, volume float64) error {
-	// 先加载现有配置以保留 AreaID
+	// Load existing config first to preserve AreaID
 	existing, _ := Load()
 	return SaveConfig(stationID, volume, existing.AreaID)
 }

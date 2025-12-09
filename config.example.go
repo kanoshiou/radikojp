@@ -2,15 +2,15 @@ package main
 
 import "fmt"
 
-// 配置示例 - 可以根据需要修改这些值
+// Configuration example - modify these values as needed
 
-// StationConfig 电台配置
+// StationConfig represents station configuration
 type StationConfig struct {
 	Name      string
 	StationID string
 }
 
-// 预定义的电台列表
+// Predefined station list
 var Stations = map[string]StationConfig{
 	"QRR": {
 		Name:      "文化放送",
@@ -38,7 +38,7 @@ var Stations = map[string]StationConfig{
 	},
 }
 
-// GetStationURL 根据电台 ID 生成完整 URL
+// GetStationURL generates a full URL based on the station ID
 func GetStationURL(stationID string, lsid string) string {
 	baseURL := "https://c-radiko.smartstream.ne.jp/%s/_definst_/simul-stream.stream/playlist.m3u8"
 	return fmt.Sprintf(baseURL+"?station_id=%s&l=30&lsid=%s&type=b", stationID, stationID, lsid)

@@ -1,38 +1,120 @@
-# 使用说明
+# Usage Guide
 
-## 基本使用
+## Starting the Program
 
 ```bash
-# 运行程序
+# Run with default settings
 ./radiko
 
-# 停止播放
-按 Ctrl+C
+# Run with specific initial volume (0-100)
+./radiko -volume 50
 ```
 
-## 自定义电台
+## TUI Controls
 
-编辑 `main.go` 修改电台 URL：
+### Navigation
 
-```go
-url := "https://c-radiko.smartstream.ne.jp/TBS/_definst_/simul-stream.stream/playlist.m3u8?station_id=TBS&l=30&lsid=xxx&type=b"
+| Key | Action |
+|-----|--------|
+| ↑ / k | Move up in station list |
+| ↓ / j | Move down in station list |
+| ← / h | Switch to previous region |
+| → / l | Switch to next region |
+| Enter / Space | Play selected station |
+
+### Playback Controls
+
+| Key | Action |
+|-----|--------|
+| + / = | Increase volume |
+| - / _ | Decrease volume |
+| 0-9 | Set volume (0=0%, 5=50%, 9=90%) |
+| m | Toggle mute |
+| r | Reconnect (refresh stream) |
+
+### General
+
+| Key | Action |
+|-----|--------|
+| Esc | Exit program (or cancel region selection) |
+| Ctrl+C | Force quit |
+
+## Interface Layout
+
+```
+📻 Radiko  🔊 80%
+  北海道 青森 岩手 [東京] 神奈川  [13/47]
+──────────────────────────────────────────────
+  TBSラジオ TBS
+  文化放送 QRR
+▶ ニッポン放送 LFR    ← Currently playing
+  TOKYO FM FMT
+  J-WAVE FMJ
+  ↓ さらに表示
+──────────────────────────────────────────────
+▶ ニッポン放送 LFR  ♪ オールナイトニッポン
+↑↓ 選択  Enter 再生  ←→ 地域切替  +- 音量  m ミュート  r 再接続  Esc 終了
 ```
 
-## 配置选项
+### UI Elements
 
-查看 `config.example.go` 了解可用的配置选项。
+- **Header**: Title and current volume
+- **Region Bar**: Shows nearby regions, current region highlighted
+- **Station List**: Scrollable list of stations
+  - `▶` indicates currently playing station
+  - Selected station is highlighted
+- **Footer**: Now playing info and keyboard shortcuts
 
-## 常见问题
+## Region Selection
 
-### 没有声音？
-- 检查系统音量
-- 确认 ffmpeg 已安装
-- 检查网络连接
+You can switch regions in two ways:
 
-### 播放卡顿？
-- 检查网络速度
-- 尝试更换网络
+1. **Quick switch**: Press ← / → while in station list
+2. **Region selector**: 
+   - Press ↑ when at top of station list to enter region mode
+   - Use ← / → to navigate regions
+   - Press Enter to confirm
+   - Press ↓ or Esc to cancel
+
+## Configuration
+
+The program automatically saves:
+- Last played station
+- Volume level
+- Selected region
+
+Configuration file location:
+- **Windows**: `%APPDATA%\radikojp\config.json`
+- **Linux/macOS**: `~/.config/radikojp/config.json`
+
+### Config File Format
+
+```json
+{
+  "last_station_id": "LFR",
+  "volume": 0.8,
+  "area_id": "JP13"
+}
+```
+
+## Auto-Reconnect
+
+The player automatically reconnects when:
+- Stream is interrupted for more than 10 seconds
+- Network connection is restored
+
+During reconnection, you'll see status updates:
+- 🔄 再接続中... (Reconnecting...)
+- 🔑 認証取得中... (Getting auth...)
+- ▶ 再生を再開中... (Resuming playback...)
+
+## Tips
+
+1. **Quick volume**: Press number keys 0-9 for instant volume levels
+2. **Mute toggle**: Press `m` to quickly mute/unmute
+3. **Refresh stream**: If audio stutters, press `r` to reconnect
+4. **Terminal size**: Resize your terminal for better display
 
 ---
 
-**更多信息** 查看 [故障排除](TROUBLESHOOTING.md)
+**Having issues?** See [Troubleshooting](TROUBLESHOOTING.md)

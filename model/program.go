@@ -1,26 +1,26 @@
 package model
 
-// ProgramResponse 节目 API 响应
+// ProgramResponse represents the program API response
 type ProgramResponse struct {
 	Stations []StationProgram `json:"stations"`
 }
 
-// StationProgram 电台节目信息
+// StationProgram represents station program information
 type StationProgram struct {
 	StationID string   `json:"station_id"`
 	Programs  Programs `json:"programs"`
 }
 
-// Programs 节目列表容器
+// Programs represents the program list container
 type Programs struct {
 	Date    string    `json:"date"`
 	Program []Program `json:"program"`
 }
 
-// Program 单个节目信息
+// Program represents a single program
 type Program struct {
-	Ft    string `json:"ft"`    // 开始时间 YYYYMMDDHHMMSS
-	To    string `json:"to"`    // 结束时间 YYYYMMDDHHMMSS
-	Title string `json:"title"` // 节目标题
-	Pfm   string `json:"pfm"`   // 主持人
+	Ft    string `json:"ft"`    // Start time YYYYMMDDHHMMSS
+	To    string `json:"to"`    // End time YYYYMMDDHHMMSS
+	Title string `json:"title"` // Program title
+	Pfm   string `json:"pfm"`   // Host/Performer
 }
