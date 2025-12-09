@@ -15,9 +15,21 @@ jobs:
       matrix:
         include:
           - os: windows-latest
+            goos: windows
+            goarch: amd64
             output: radiko-windows-amd64.exe
           - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
             output: radiko-linux-amd64
+          - os: macos-latest
+            goos: darwin
+            goarch: amd64
+            output: radiko-macos-amd64
+          - os: macos-latest
+            goos: darwin
+            goarch: arm64
+            output: radiko-macos-arm64
     
     runs-on: ${{ matrix.os }}
     
@@ -37,6 +49,10 @@ jobs:
           sudo apt-get install -y libasound2-dev
 
       - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 1
         run: go build -ldflags="-s -w" -o ${{ matrix.output }}
 
       - name: Upload artifact
@@ -74,35 +90,62 @@ jobs:
           files: |
             radiko-windows-amd64.exe
             radiko-linux-amd64
+            radiko-macos-amd64
+            radiko-macos-arm64
             checksums.txt
           body: |
             ## Radiko JP Player ${{ steps.get_version.outputs.VERSION }}
             
-            ### 📦 下载
+            A Radiko Japanese internet radio player with an interactive Terminal UI.
             
-            选择适合你系统的版本：
+            ### ✨ Features
+            
+            - 🎵 Stream live Radiko radio stations
+            - 🗾 Support for all 47 Japanese prefectures
+            - 🖥️ Interactive terminal UI (TUI)
+            - 🔊 Volume control with mute & precise adjustment
+            - 🔄 Auto-reconnect on stream failure
+            - 💾 Remembers last station, region, and settings
+            
+            ### 📦 Downloads
+            
+            Choose the version for your system:
             
             - **Windows (x64)**: `radiko-windows-amd64.exe`
             - **Linux (x64)**: `radiko-linux-amd64`
+            - **macOS (Intel)**: `radiko-macos-amd64`
+            - **macOS (Apple Silicon)**: `radiko-macos-arm64`
             
-            ### ⚠️ 重要提示
+            ### ⚠️ Requirements
             
-            **需要安装 ffmpeg**：本程序依赖 ffmpeg 进行音频解码。
+            **ffmpeg is required** for audio decoding:
             
-            - Windows: `choco install ffmpeg`
+            - Windows: `choco install ffmpeg` or `winget install ffmpeg`
             - Linux: `sudo apt install ffmpeg`
             - macOS: `brew install ffmpeg`
             
-            ### 🎵 音量控制
+            ### 🎮 Controls
             
-            - 启动时设置音量：`radiko.exe --volume 80`
-            - 运行时按 ↑/↓ 调节音量
-            - 按 m 键静音/取消静音
-            - 按 0-9 快速设置音量
+            | Key | Action |
+            |-----|--------|
+            | ↑/↓ or k/j | Navigate stations |
+            | ←/→ or h/l | Switch regions |
+            | Enter/Space | Play station |
+            | +/- | Volume up/down |
+            | 0-9 | Set volume level (0=0%, 5=50%, 9=90%) |
+            | m | Toggle mute |
+            | r | Reconnect stream |
+            | Esc | Exit |
             
-            ### ✅ 校验和
+            ### 💾 Configuration
             
-            下载后请验证文件完整性，参考 `checksums.txt`
+            Settings are saved automatically:
+            - **Windows**: `%APPDATA%\radikojp\config.json`
+            - **Linux/macOS**: `~/.config/radikojp/config.json`
+            
+            ### ✅ Checksums
+            
+            Verify file integrity after download by referring to `checksums.txt`
           draft: false
           prerelease: false
         env:
