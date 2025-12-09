@@ -1,5 +1,7 @@
 # Radiko JP Player
 
+[English](README.md) | [日本語](README.ja.md) | **[中文](README.zh.md)**
+
 一个用 Go 语言编写的 Radiko 日本网络电台播放器，带有交互式 TUI 界面。
 
 [![Release](https://img.shields.io/github/v/release/kanoshiou/radikojp)](https://github.com/kanoshiou/radikojp/releases)

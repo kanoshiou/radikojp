@@ -1,5 +1,7 @@
 # Radiko JP Player
 
+**[English](README.md)** | [日本語](README.ja.md) | [中文](README.zh.md)
+
 A Radiko Japanese internet radio player written in Go with an interactive TUI.
 
 [![Release](https://img.shields.io/github/v/release/kanoshiou/radikojp)](https://github.com/kanoshiou/radikojp/releases)
