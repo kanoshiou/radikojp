@@ -7,7 +7,6 @@ import (
 
 	"radikojp/api"
 	"radikojp/config"
-	"radikojp/hook"
 	"radikojp/model"
 	"radikojp/player"
 
@@ -192,7 +191,7 @@ func NewModel(stations []model.Station, authToken string, initialVolume float64,
 	}
 
 	p.SetReconnectCallback(func() string {
-		return hook.Auth(shared.CurrentAreaID)
+		return api.Auth(shared.CurrentAreaID)
 	})
 
 	return Model{

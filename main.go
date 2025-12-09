@@ -7,7 +7,6 @@ import (
 
 	"radikojp/api"
 	"radikojp/config"
-	"radikojp/hook"
 	"radikojp/tui"
 )
 
@@ -35,7 +34,7 @@ func main() {
 
 	// Get authentication token
 	fmt.Println("🔐 認証中...")
-	authToken := hook.Auth(cfg.AreaID)
+	authToken := api.Auth(cfg.AreaID)
 	fmt.Println("✓ 認証成功")
 
 	// Get station list

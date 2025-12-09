@@ -8,6 +8,7 @@ radikojp/
 │   └── workflows/
 │       └── release.yml       # GitHub Actions auto-release
 ├── api/
+│   ├── auth.go               # Radiko authentication module
 │   └── client.go             # Radiko API client
 ├── config/
 │   └── config.go             # Configuration management
@@ -16,8 +17,6 @@ radikojp/
 │   ├── USAGE.md              # Usage guide
 │   ├── TROUBLESHOOTING.md    # Troubleshooting
 │   └── ARCHITECTURE.md       # Architecture (this file)
-├── hook/
-│   └── Auth.go               # Radiko authentication module
 ├── model/
 │   ├── authtoken.go          # Auth token model
 │   ├── device.go             # Device info and GPS generation
@@ -80,21 +79,21 @@ radikojp/
 
 ## Core Modules
 
-### 1. Authentication Module (hook/Auth.go)
+### 1. API Module (api/)
 
+#### Authentication (api/auth.go)
 Handles Radiko's two-step authentication:
 - **auth1**: Obtains initial token, key offset, and length
 - **auth2**: Validates token with partial key and GPS location
 - Supports all 47 Japanese prefectures via GPS spoofing
 
-### 2. API Client (api/client.go)
-
+#### API Client (api/client.go)
 Communicates with Radiko services:
 - `GetStations()`: Fetches station list for a region
 - `GetStreamURLs()`: Gets streaming URLs for a station
 - `GetCurrentProgram()`: Retrieves current program info
 
-### 3. Player Module (player/ffmpeg_player.go)
+### 2. Player Module (player/ffmpeg_player.go)
 
 FFmpeg-based audio player with:
 - Real-time AAC to PCM decoding
@@ -103,7 +102,7 @@ FFmpeg-based audio player with:
 - Auto-reconnection on stream failure
 - Reconnection status tracking
 
-### 4. TUI Module (tui/tui.go)
+### 3. TUI Module (tui/tui.go)
 
 Interactive terminal interface using bubbletea:
 - Station list with scroll support
@@ -112,7 +111,7 @@ Interactive terminal interface using bubbletea:
 - Current program display
 - Keyboard navigation
 
-### 5. Configuration (config/config.go)
+### 4. Configuration (config/config.go)
 
 Persistent user preferences:
 - Last played station
@@ -120,7 +119,7 @@ Persistent user preferences:
 - Selected region
 - Auto-saved on changes
 
-### 6. Region/Device Models (model/)
+### 5. Region/Device Models (model/)
 
 - **region.go**: All 47 Japanese prefectures with IDs
 - **device.go**: Random Android device generation for auth
