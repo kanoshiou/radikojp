@@ -210,6 +210,9 @@ func (p *FFmpegPlayer) Stop() {
 	}
 
 	p.playing = false
+	
+	// 创建新的 context 以便下次 Play() 可以正常工作
+	p.ctx, p.cancel = context.WithCancel(context.Background())
 }
 
 // IsPlaying 是否正在播放

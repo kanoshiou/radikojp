@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"radikojp/api"
 	"radikojp/hook"
 	"radikojp/player"
 	"syscall"
@@ -17,9 +18,6 @@ import (
 )
 
 func main() {
-	// 打印版本信息
-	PrintVersion()
-
 	// 解析命令行参数
 	volumePercent := flag.Int("volume", 80, "Initial volume (0-100)")
 	flag.Parse()
@@ -32,98 +30,181 @@ func main() {
 		initialVolume = 1
 	}
 
-	url := "https://c-radiko.smartstream.ne.jp/QRR/_definst_/simul-stream.stream/playlist.m3u8?station_id=QRR&l=30&lsid=5e586af5ccb3b0b2498abfb19eaa8472&type=b"
-
 	// 获取认证 token
 	fmt.Println("Authenticating...")
 	authToken := hook.Auth()
 	fmt.Println("✓ Auth token obtained")
 
-	// 获取播放列表
-	client := &http.Client{}
-	req, _ := http.NewRequest("GET", url, nil)
-	req.Header.Set("X-Radiko-AuthToken", authToken)
-	res, err := client.Do(req)
+	// 获取电台列表
+	fmt.Println("Fetching station list...")
+	stations, err := api.GetStations()
 	if err != nil {
-		panic(err)
+		panic(fmt.Sprintf("Failed to fetch stations: %v", err))
+	}
+	fmt.Printf("✓ Found %d stations\n", len(stations))
+
+	if len(stations) == 0 {
+		panic("No stations available")
 	}
 
-	// 解析播放列表
-	byts, err := io.ReadAll(res.Body)
-	res.Body.Close()
-	if err != nil {
-		panic(err)
-	}
-
-	pl, err := playlist.Unmarshal(byts)
-	if err != nil {
-		panic(err)
-	}
-
-	streamUrl := ""
-
-	switch pl := pl.(type) {
-	case *playlist.Multivariant:
-		fmt.Println("Multivariant playlist detected")
-		if len(pl.Variants) > 0 {
-			streamUrl = pl.Variants[0].URI
-			fmt.Printf("Using stream: %s\n", streamUrl)
+	// 默认选择 QRR 或第一个
+	currentStationIdx := 0
+	for i, s := range stations {
+		if s.ID == "QRR" {
+			currentStationIdx = i
+			break
 		}
-
-	case *playlist.Media:
-		fmt.Println("Media playlist detected")
-		streamUrl = url
 	}
 
-	if streamUrl == "" {
-		panic("No valid stream URL found")
-	}
-
-	// 创建并启动播放器
+	// 创建播放器
 	fmt.Println("Starting ffmpeg player...")
 	fmt.Println("Note: This requires ffmpeg to be installed and in PATH")
 	fmt.Printf("Initial volume: %d%%\n", *volumePercent)
 	fmt.Println()
 
 	ffmpegPlayer := player.NewFFmpegPlayer(authToken, initialVolume)
-	
+
 	// 设置重连回调函数
 	ffmpegPlayer.SetReconnectCallback(func() string {
 		return hook.Auth()
 	})
 
-	err = ffmpegPlayer.Play(streamUrl)
-	if err != nil {
-		panic(fmt.Sprintf("Failed to start player: %v", err))
+	// 播放指定电台的函数
+	// 播放指定电台的函数
+	playStation := func(idx int) {
+		station := stations[idx]
+		fmt.Printf("\n\n📺 Switching to: %s (%s)\n", station.Name, station.ID)
+
+		// 获取播放列表 URL 列表
+		playlistURLs, err := api.GetStreamURLs(station.ID)
+		if err != nil {
+			fmt.Printf("❌ Failed to get stream URLs: %v\n", err)
+			return
+		}
+
+		var finalStreamUrl string
+		lsid := "5e586af5ccb3b0b2498abfb19eaa8472"
+		
+		// 使用最后一个 URL（与之前的行为一致）
+		if len(playlistURLs) > 0 {
+			lastUrl := playlistURLs[len(playlistURLs)-1]
+			finalStreamUrl = fmt.Sprintf("%s?station_id=%s&l=30&lsid=%s&type=b", lastUrl, station.ID, lsid)
+		}
+
+		if finalStreamUrl == "" {
+			fmt.Printf("❌ No stream URL available for station %s\n", station.Name)
+			return
+		}
+
+		// 停止当前播放（如果有）
+		ffmpegPlayer.Stop()
+		
+		println(finalStreamUrl)
+		// 启动新播放
+		err = ffmpegPlayer.Play(finalStreamUrl)
+		if err != nil {
+			fmt.Printf("❌ Failed to start player: %v\n", err)
+			return
+		}
+
+		// 等待播放器启动
+		time.Sleep(500 * time.Millisecond)
+		fmt.Println("🎵 Playing...")
+		printControls()
+		printVolumeStatus(ffmpegPlayer, station.Name)
 	}
 
-	// 等待播放器完全启动
-	time.Sleep(500 * time.Millisecond)
-
-	fmt.Println()
-	fmt.Println("🎵 Playing...")
-	fmt.Println()
-	printControls()
-	printVolumeStatus(ffmpegPlayer)
+	// 初始播放
+	playStation(currentStationIdx)
 
 	// 初始化键盘监听
 	if err := keyboard.Open(); err != nil {
 		fmt.Printf("Warning: Could not open keyboard: %v\n", err)
-		fmt.Println("Volume control disabled. Press Ctrl+C to stop")
+		fmt.Println("Controls disabled. Press Ctrl+C to stop")
 
-		// 等待中断信号
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 		<-sigChan
 	} else {
 		defer keyboard.Close()
 
-		// 等待中断信号或键盘输入
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
-		// 启动键盘监听
-		go handleKeyboard(ffmpegPlayer)
+		// 键盘处理循环
+		go func() {
+			lastUpdate := time.Now()
+			updateInterval := 50 * time.Millisecond
+
+			for {
+				char, key, err := keyboard.GetKey()
+				if err != nil {
+					return
+				}
+
+				needsUpdate := false
+				needsSwitch := false
+
+				switch key {
+				case keyboard.KeyArrowUp:
+					ffmpegPlayer.IncreaseVolume(0.05)
+					needsUpdate = true
+				case keyboard.KeyArrowDown:
+					ffmpegPlayer.DecreaseVolume(0.05)
+					needsUpdate = true
+				case keyboard.KeyArrowRight: // 下一个电台
+					currentStationIdx = (currentStationIdx + 1) % len(stations)
+					needsSwitch = true
+				case keyboard.KeyArrowLeft: // 上一个电台
+					currentStationIdx = (currentStationIdx - 1 + len(stations)) % len(stations)
+					needsSwitch = true
+				}
+
+				switch char {
+				case '+', '=':
+					ffmpegPlayer.IncreaseVolume(0.05)
+					needsUpdate = true
+				case '-', '_':
+					ffmpegPlayer.DecreaseVolume(0.05)
+					needsUpdate = true
+				case 'e', 'E':
+					ffmpegPlayer.IncreaseVolume(0.05)
+					needsUpdate = true
+				case 'q', 'Q':
+					ffmpegPlayer.DecreaseVolume(0.05)
+					needsUpdate = true
+				case 'm', 'M':
+					ffmpegPlayer.ToggleMute()
+					needsUpdate = true
+				case 'n', 'N': // Next station
+					currentStationIdx = (currentStationIdx + 1) % len(stations)
+					needsSwitch = true
+				case 'p', 'P': // Previous station
+					currentStationIdx = (currentStationIdx - 1 + len(stations)) % len(stations)
+					needsSwitch = true
+				case 'r', 'R':
+					fmt.Println("\n🔄 Reconnecting...")
+					go func() {
+						err := ffmpegPlayer.Reconnect()
+						if err != nil {
+							fmt.Printf("\n❌ Reconnect failed: %v\n", err)
+						}
+					}()
+					continue
+				case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+					volume := float64(char-'0') / 10.0
+					ffmpegPlayer.SetVolume(volume)
+					needsUpdate = true
+				}
+
+				if needsSwitch {
+					playStation(currentStationIdx)
+				} else if needsUpdate && time.Since(lastUpdate) > updateInterval {
+					printVolumeStatus(ffmpegPlayer, stations[currentStationIdx].Name)
+					lastUpdate = time.Now()
+				}
+			}
+		}()
 
 		<-sigChan
 	}
@@ -133,10 +214,44 @@ func main() {
 	fmt.Println("Stopped")
 }
 
+func resolveStreamURL(playlistURL, authToken string) (string, error) {
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", playlistURL, nil)
+	req.Header.Set("X-Radiko-AuthToken", authToken)
+	res, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+	byts, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "", err
+	}
+
+	pl, err := playlist.Unmarshal(byts)
+	if err != nil {
+		return "", err
+	}
+
+	switch pl := pl.(type) {
+	case *playlist.Multivariant:
+		if len(pl.Variants) > 0 {
+			return pl.Variants[0].URI, nil
+		}
+		return "", fmt.Errorf("no variants in playlist")
+	case *playlist.Media:
+		return playlistURL, nil
+	default:
+		return "", fmt.Errorf("unknown playlist type")
+	}
+}
+
 func printControls() {
 	fmt.Println("Controls:")
 	fmt.Println("  ↑ / + / e     Increase volume")
 	fmt.Println("  ↓ / - / q     Decrease volume")
+	fmt.Println("  → / n         Next Station")
+	fmt.Println("  ← / p         Previous Station")
 	fmt.Println("  m             Mute/Unmute")
 	fmt.Println("  r             Reconnect/Replay")
 	fmt.Println("  0-9           Set volume to 0%-90%")
@@ -144,18 +259,17 @@ func printControls() {
 	fmt.Println()
 }
 
-func printVolumeStatus(p *player.FFmpegPlayer) {
+func printVolumeStatus(p *player.FFmpegPlayer, stationName string) {
 	volume := int(p.GetVolume() * 100)
 	muted := p.IsMuted()
 
-	status := fmt.Sprintf("Volume: %3d%%", volume)
+	status := fmt.Sprintf("[%s] Vol: %3d%%", stationName, volume)
 	if muted {
 		status += " [MUTED]"
 	} else {
-		status += "        " // 补齐空格，确保覆盖 [MUTED]
+		status += "        "
 	}
 
-	// 音量条
 	barLength := 20
 	filledLength := int(float64(barLength) * p.GetVolume())
 	bar := ""
@@ -167,66 +281,7 @@ func printVolumeStatus(p *player.FFmpegPlayer) {
 		}
 	}
 
-	// 使用固定长度的输出，确保完全覆盖之前的内容
 	output := fmt.Sprintf("%s [%s]", status, bar)
-	fmt.Printf("\r%-60s", output) // 左对齐，总宽度 60 字符
-}
-
-func handleKeyboard(p *player.FFmpegPlayer) {
-	lastUpdate := time.Now()
-	updateInterval := 50 * time.Millisecond
-
-	for {
-		char, key, err := keyboard.GetKey()
-		if err != nil {
-			return
-		}
-
-		needsRestart := false
-
-		switch key {
-		case keyboard.KeyArrowUp:
-			p.IncreaseVolume(0.05)
-			needsRestart = true
-		case keyboard.KeyArrowDown:
-			p.DecreaseVolume(0.05)
-			needsRestart = true
-		}
-
-		switch char {
-		case '+', '=':
-			p.IncreaseVolume(0.05)
-			needsRestart = true
-		case '-', '_':
-			p.DecreaseVolume(0.05)
-			needsRestart = true
-		case 'e', 'E':
-			p.IncreaseVolume(0.05)
-			needsRestart = true
-		case 'q', 'Q':
-			p.DecreaseVolume(0.05)
-			needsRestart = true
-		case 'm', 'M':
-			p.ToggleMute()
-			needsRestart = true
-		case 'r', 'R':
-			fmt.Println("\n🔄 手动重连中...")
-			go func() {
-				err := p.Reconnect()
-				if err != nil {
-					fmt.Printf("\n❌ 重连失败: %v\n", err)
-				}
-			}()
-			continue
-		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-			volume := float64(char-'0') / 10.0
-			p.SetVolume(volume)
-			needsRestart = true
-		}
-
-		if needsRestart && time.Since(lastUpdate) > updateInterval {
-			printVolumeStatus(p)
-			lastUpdate = time.Now()
-		}
-	}
+	// 使用 \r 和空格清除行，防止残留
+	fmt.Printf("\r%-80s", output)
 }
