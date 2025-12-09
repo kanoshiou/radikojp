@@ -1,10 +1,13 @@
 package api
 
 import (
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io"
 	"net/http"
+	"time"
+
 	"radikojp/model"
 )
 
@@ -73,4 +76,51 @@ func GetStreamURLs(stationID string) ([]string, error) {
 	}
 
 	return urls, nil
+}
+
+// ProgramURLFmt 节目信息 API URL 格式
+const ProgramURLFmt = "https://api.radiko.jp/program/v4/date/%s/station/%s.json"
+
+// GetCurrentProgram 获取电台当前节目
+func GetCurrentProgram(stationID string) (*model.Program, error) {
+	// 使用日本时区 (UTC+9)
+	jst := time.FixedZone("JST", 9*60*60)
+	now := time.Now().In(jst)
+	dateStr := now.Format("20060102")
+	timeStr := now.Format("20060102150405")
+
+	url := fmt.Sprintf(ProgramURLFmt, dateStr, stationID)
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("status %d", resp.StatusCode)
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var progResp model.ProgramResponse
+	if err := json.Unmarshal(data, &progResp); err != nil {
+		return nil, err
+	}
+
+	// 查找当前时间的节目
+	for _, station := range progResp.Stations {
+		if station.StationID == stationID {
+			for _, prog := range station.Programs.Program {
+				// 检查当前时间是否在节目时间范围内
+				if prog.Ft <= timeStr && timeStr < prog.To {
+					return &prog, nil
+				}
+			}
+		}
+	}
+
+	return nil, nil
 }

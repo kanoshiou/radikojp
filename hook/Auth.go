@@ -2,7 +2,6 @@ package hook
 
 import (
 	"encoding/base64"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -48,7 +47,6 @@ func auth1() authInfo {
 	req, err := http.NewRequest(method, url, nil)
 
 	if err != nil {
-		fmt.Println(err)
 		return authInfo{}
 	}
 	req.Header.Add("User-Agent", "Dalvik/2.1.0 (Linux; U; Android 10.0.0; SM-N950N/7070703)")
@@ -62,7 +60,6 @@ func auth1() authInfo {
 
 	res, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
 		return authInfo{}
 	}
 	header := res.Header
@@ -79,7 +76,6 @@ func auth2(auth authInfo, areaID string) {
 	req, err := http.NewRequest(method, url, nil)
 
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
 
@@ -107,15 +103,14 @@ func auth2(auth authInfo, areaID string) {
 
 	res, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
 	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		fmt.Println(err)
 		return
 	}
-	fmt.Println(string(body))
+	// 静默处理响应，不输出到终端
+	_ = body
 }
