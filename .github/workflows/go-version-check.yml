@@ -24,33 +24,46 @@ jobs:
       - name: Get current Go version from go.mod
         id: current
         run: |
+          # Get full version from go.mod (e.g., 1.25.3 or 1.25)
           CURRENT_VERSION=$(grep -E "^go [0-9]+\.[0-9]+" go.mod | awk '{print $2}')
+          # Extract major.minor for comparison (e.g., 1.25 from 1.25.3)
+          CURRENT_MINOR=$(echo $CURRENT_VERSION | cut -d. -f1,2)
           echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
-          echo "Current Go version: $CURRENT_VERSION"
+          echo "minor=$CURRENT_MINOR" >> $GITHUB_OUTPUT
+          echo "Current Go version: $CURRENT_VERSION (minor: $CURRENT_MINOR)"
 
       - name: Get latest stable Go version
         id: latest
         run: |
           # Fetch latest stable Go version from official API
           LATEST_VERSION=$(curl -s https://go.dev/dl/?mode=json | jq -r '.[0].version' | sed 's/go//')
-          # Extract major.minor (e.g., 1.22 from 1.22.1)
+          # Extract major.minor (e.g., 1.25 from 1.25.5)
           LATEST_MINOR=$(echo $LATEST_VERSION | cut -d. -f1,2)
-          echo "version=$LATEST_MINOR" >> $GITHUB_OUTPUT
-          echo "full_version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "version=$LATEST_VERSION" >> $GITHUB_OUTPUT
+          echo "minor=$LATEST_MINOR" >> $GITHUB_OUTPUT
           echo "Latest Go version: $LATEST_VERSION (minor: $LATEST_MINOR)"
 
       - name: Compare versions
         id: compare
         run: |
-          CURRENT="${{ steps.current.outputs.version }}"
-          LATEST="${{ steps.latest.outputs.version }}"
+          CURRENT_MINOR="${{ steps.current.outputs.minor }}"
+          LATEST_MINOR="${{ steps.latest.outputs.minor }}"
+          LATEST_FULL="${{ steps.latest.outputs.version }}"
           
-          if [ "$CURRENT" != "$LATEST" ]; then
+          # Compare major.minor versions numerically
+          CURRENT_MAJOR=$(echo $CURRENT_MINOR | cut -d. -f1)
+          CURRENT_MIN=$(echo $CURRENT_MINOR | cut -d. -f2)
+          LATEST_MAJOR=$(echo $LATEST_MINOR | cut -d. -f1)
+          LATEST_MIN=$(echo $LATEST_MINOR | cut -d. -f2)
+          
+          # Check if latest is actually newer (not just different)
+          if [ "$LATEST_MAJOR" -gt "$CURRENT_MAJOR" ] || \
+             ([ "$LATEST_MAJOR" -eq "$CURRENT_MAJOR" ] && [ "$LATEST_MIN" -gt "$CURRENT_MIN" ]); then
             echo "update_available=true" >> $GITHUB_OUTPUT
-            echo "Update available: $CURRENT -> $LATEST"
+            echo "Update available: $CURRENT_MINOR -> $LATEST_MINOR (full: $LATEST_FULL)"
           else
             echo "update_available=false" >> $GITHUB_OUTPUT
-            echo "Go version is up to date"
+            echo "Go version is up to date ($CURRENT_MINOR >= $LATEST_MINOR)"
           fi
 
       - name: Create update branch and PR
@@ -58,10 +71,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          CURRENT="${{ steps.current.outputs.version }}"
-          LATEST="${{ steps.latest.outputs.version }}"
-          FULL_LATEST="${{ steps.latest.outputs.full_version }}"
-          BRANCH_NAME="deps/go-$LATEST"
+          CURRENT_MINOR="${{ steps.current.outputs.minor }}"
+          LATEST_MINOR="${{ steps.latest.outputs.minor }}"
+          LATEST_FULL="${{ steps.latest.outputs.version }}"
+          BRANCH_NAME="deps/go-$LATEST_MINOR"
           
           # Configure git
           git config user.name "github-actions[bot]"
@@ -76,35 +89,36 @@ jobs:
           # Create new branch
           git checkout -b "$BRANCH_NAME"
           
-          # Update go.mod
-          sed -i "s/^go $CURRENT/go $LATEST/" go.mod
+          # Update go.mod to new minor version (release.yml reads from go.mod automatically)
+          sed -i "s/^go $CURRENT_MINOR.*/go $LATEST_MINOR/" go.mod
           
-          # Update release.yml if it specifies Go version
-          if grep -q "go-version:" .github/workflows/release.yml; then
-            sed -i "s/go-version: '$CURRENT'/go-version: '$LATEST'/" .github/workflows/release.yml
-            sed -i "s/go-version: \"$CURRENT\"/go-version: \"$LATEST\"/" .github/workflows/release.yml
-          fi
+          # Run go mod tidy to update go.sum
+          go mod tidy || true
           
           # Commit changes
-          git add go.mod .github/workflows/release.yml
-          git commit -m "deps(go): update Go version from $CURRENT to $LATEST"
+          git add go.mod go.sum
+          git commit -m "deps(go): update Go version from $CURRENT_MINOR to $LATEST_MINOR"
           
           # Push branch
           git push origin "$BRANCH_NAME"
           
+          # Ensure labels exist (create if not)
+          gh label create "dependencies" --description "Dependency updates" --color "0366d6" 2>/dev/null || true
+          gh label create "go" --description "Go related changes" --color "00ADD8" 2>/dev/null || true
+          
           # Create PR
           gh pr create \
-            --title "deps(go): update Go version from $CURRENT to $LATEST" \
+            --title "deps(go): update Go version from $CURRENT_MINOR to $LATEST_MINOR" \
             --body "## Go Version Update
 
-          This PR updates the Go version from \`$CURRENT\` to \`$LATEST\` (latest: \`$FULL_LATEST\`).
+          This PR updates the Go version from \`$CURRENT_MINOR\` to \`$LATEST_MINOR\` (latest patch: \`$LATEST_FULL\`).
 
           ### Changes
-          - Updated \`go.mod\` to use Go $LATEST
-          - Updated \`.github/workflows/release.yml\` to build with Go $LATEST
+          - Updated \`go.mod\` to use Go $LATEST_MINOR
+          - \`release.yml\` will automatically use this version via \`go-version-file: 'go.mod'\`
 
           ### Release Notes
-          See the [Go $FULL_LATEST release notes](https://go.dev/doc/go$LATEST) for details.
+          See the [Go $LATEST_MINOR release notes](https://go.dev/doc/go$LATEST_MINOR) for details.
 
           ---
           *This PR was automatically created by the Go Version Check workflow.*" \
