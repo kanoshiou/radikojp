@@ -76,6 +76,26 @@ You can switch regions in two ways:
    - Press Enter to confirm
    - Press ↓ or Esc to cancel
 
+## Precise Volume Control
+
+For precise volume adjustments, you can enter volume control mode:
+
+1. **Enter volume mode**: 
+   - Navigate up from region selector (press ↑ when in region mode)
+   - The volume bar will display with a visual indicator
+
+2. **Volume bar display**:
+   ```
+   ▶ 🔊 [████████████░░░░░░░░]  60%
+   ```
+
+3. **Controls in volume mode**:
+   - ← : Decrease volume by 1%
+   - → : Increase volume by 1%
+   - m : Toggle mute
+   - ↓ : Return to region selector
+   - Esc : Return to station list
+
 ## Configuration
 
 The program automatically saves:

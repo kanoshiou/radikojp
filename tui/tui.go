@@ -22,6 +22,7 @@ type FocusMode int
 const (
 	FocusStations FocusMode = iota
 	FocusRegion
+	FocusVolume
 )
 
 // KeyMap defines keyboard shortcuts
@@ -317,6 +318,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.errorMessage = ""
 		m.statusMessage = ""
 
+		if m.focus == FocusVolume {
+			return m.handleVolumeKeys(msg)
+		}
 		if m.focus == FocusRegion {
 			return m.handleRegionKeys(msg)
 		}
@@ -415,6 +419,11 @@ func (m Model) handleStationKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 
 func (m Model) handleRegionKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch {
+	case key.Matches(msg, m.keys.Up):
+		// Move to volume control when pressing up from region
+		m.focus = FocusVolume
+		return m, nil
+
 	case key.Matches(msg, m.keys.Left):
 		if m.selectedArea > 0 {
 			m.selectedArea--
@@ -438,6 +447,56 @@ func (m Model) handleRegionKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			m.focus = FocusStations
 			return m, m.loadStationsForCurrentArea()
 		}
+		m.focus = FocusStations
+		return m, nil
+	}
+	return m, nil
+}
+
+// handleVolumeKeys handles keyboard input when volume control is focused
+func (m Model) handleVolumeKeys(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	switch {
+	case key.Matches(msg, m.keys.Left):
+		// Decrease volume by 1%
+		if m.shared.Player != nil {
+			m.shared.Player.DecreaseVolume(0.01)
+			m.shared.Volume = m.shared.Player.GetVolume()
+			m.shared.Muted = false
+			m.saveConfig()
+		}
+		return m, nil
+
+	case key.Matches(msg, m.keys.Right):
+		// Increase volume by 1%
+		if m.shared.Player != nil {
+			m.shared.Player.IncreaseVolume(0.01)
+			m.shared.Volume = m.shared.Player.GetVolume()
+			m.shared.Muted = false
+			m.saveConfig()
+		}
+		return m, nil
+
+	case key.Matches(msg, m.keys.Down):
+		// Move to region selector
+		m.focus = FocusRegion
+		m.selectedArea = m.currentArea
+		return m, nil
+
+	case key.Matches(msg, m.keys.Quit):
+		// Exit volume mode to station list
+		m.focus = FocusStations
+		m.selectedArea = m.currentArea
+		return m, nil
+
+	case key.Matches(msg, m.keys.Mute):
+		if m.shared.Player != nil {
+			m.shared.Player.ToggleMute()
+			m.shared.Muted = m.shared.Player.IsMuted()
+		}
+		return m, nil
+
+	case key.Matches(msg, m.keys.Select):
+		// Confirm and move to station list
 		m.focus = FocusStations
 		return m, nil
 	}
@@ -685,9 +744,12 @@ func (m Model) renderFooter() string {
 	lines = append(lines, playLine)
 
 	// Help
-	if m.focus == FocusRegion {
-		lines = append(lines, statusStyle.Render("← → 選択  Enter 確定  ↓/Esc 戻る"))
-	} else {
+	switch m.focus {
+	case FocusVolume:
+		lines = append(lines, statusStyle.Render("← → 音量調整  m ミュート  ↓ 地域へ  Esc 戻る"))
+	case FocusRegion:
+		lines = append(lines, statusStyle.Render("← → 選択  Enter 確定  ↑ 音量へ  ↓/Esc 戻る"))
+	default:
 		lines = append(lines, statusStyle.Render("↑↓ 選択  Enter 再生  ←→ 地域切替  +- 音量  m ミュート  r 再接続  Esc 終了"))
 	}
 
@@ -699,10 +761,55 @@ func (m Model) renderVolume() string {
 	if m.shared.Player != nil {
 		vol = int(m.shared.Player.GetVolume() * 100)
 	}
+
+	// In volume focus mode, show a detailed volume bar
+	if m.focus == FocusVolume {
+		return m.renderVolumeBar(vol)
+	}
+
+	// Normal display
 	if m.shared.Muted {
 		return statusStyle.Render(fmt.Sprintf("🔇 %d%%", vol))
 	}
 	return volumeStyle.Render(fmt.Sprintf("🔊 %d%%", vol))
+}
+
+// renderVolumeBar renders a detailed volume bar for precise control
+func (m Model) renderVolumeBar(vol int) string {
+	barWidth := 20
+	filled := vol * barWidth / 100
+
+	var bar strings.Builder
+
+	// Focus indicator
+	bar.WriteString(focusIndicatorStyle.Render("▶ "))
+
+	// Volume icon
+	if m.shared.Muted {
+		bar.WriteString(statusStyle.Render("🔇 "))
+	} else if vol == 0 {
+		bar.WriteString(volumeStyle.Render("🔈 "))
+	} else if vol < 50 {
+		bar.WriteString(volumeStyle.Render("🔉 "))
+	} else {
+		bar.WriteString(volumeStyle.Render("🔊 "))
+	}
+
+	// Volume bar
+	bar.WriteString("[")
+	for i := 0; i < barWidth; i++ {
+		if i < filled {
+			bar.WriteString(volumeStyle.Render("█"))
+		} else {
+			bar.WriteString(statusStyle.Render("░"))
+		}
+	}
+	bar.WriteString("] ")
+
+	// Percentage
+	bar.WriteString(volumeStyle.Render(fmt.Sprintf("%3d%%", vol)))
+
+	return bar.String()
 }
 
 func (m Model) renderRegionLine() string {
