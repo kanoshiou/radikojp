@@ -552,6 +552,7 @@ func (m *Model) playStation() tea.Cmd {
 	stationIdx := m.cursor
 	station := m.stations[stationIdx]
 	shared := m.shared
+	currentAreaID := m.getCurrentAreaID()
 
 	return func() tea.Msg {
 		playlistURLs, err := api.GetStreamURLs(station.ID)
@@ -569,7 +570,13 @@ func (m *Model) playStation() tea.Cmd {
 		shared.Player.Stop()
 		time.Sleep(100 * time.Millisecond)
 
-		// Use existing token, don't re-authenticate
+		// Re-authenticate for the current area to ensure token matches the region
+		newToken := api.Auth(currentAreaID)
+		if newToken != "" {
+			shared.AuthToken = newToken
+			shared.Player.UpdateAuthToken(newToken)
+		}
+
 		err = shared.Player.Play(finalStreamUrl)
 		return playResultMsg{
 			err:         err,
