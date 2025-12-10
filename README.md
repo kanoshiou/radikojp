@@ -94,6 +94,10 @@ brew install ffmpeg
 - **Audio**: [oto](https://github.com/ebitengine/oto) + ffmpeg
 - **Styling**: [lipgloss](https://github.com/charmbracelet/lipgloss)
 
+## 🙏 Special Thanks
+
+Special thanks to [rajiko](https://github.com/jackyzy823/rajiko) for inspiration and reference.
+
 ## 📋 System Requirements
 
 - ffmpeg (runtime)

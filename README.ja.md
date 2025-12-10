@@ -94,6 +94,10 @@ brew install ffmpeg
 - **オーディオ**: [oto](https://github.com/ebitengine/oto) + ffmpeg
 - **スタイリング**: [lipgloss](https://github.com/charmbracelet/lipgloss)
 
+## 🙏 謝辞
+
+インスピレーションと参考のために [rajiko](https://github.com/jackyzy823/rajiko) に感謝します。
+
 ## 📋 システム要件
 
 - ffmpeg（実行時）
