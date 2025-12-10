@@ -20,7 +20,6 @@ radiko-tui/
 │   ├── TROUBLESHOOTING.md        # Troubleshooting
 │   └── USAGE.md                  # Usage guide
 ├── model/
-│   ├── authtoken.go              # Auth token model
 │   ├── device.go                 # Device info and GPS generation
 │   ├── program.go                # Program data models
 │   ├── region.go                 # Region/Area definitions
