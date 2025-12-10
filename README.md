@@ -1,8 +1,8 @@
-# Radiko JP Player
+# Radiko TUI
 
 **[English](README.md)** | [日本語](README.ja.md) | [中文](README.zh.md)
 
-A Radiko Japanese internet radio player written in Go with an interactive TUI.
+A Terminal User Interface (TUI) for streaming Radiko Japanese internet radio, written in Go.
 
 [![Release](https://img.shields.io/github/v/release/kanoshiou/radiko-tui)](https://github.com/kanoshiou/radiko-tui/releases)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/kanoshiou/radiko-tui)](https://go.dev/)
@@ -14,6 +14,7 @@ A Radiko Japanese internet radio player written in Go with an interactive TUI.
 - 🗾 Support for all 47 Japanese prefectures
 - 🖥️ Interactive terminal UI (TUI)
 - 🔊 Volume control with mute support
+- ⏺️ Record streams to AAC files
 - 🔄 Auto-reconnect on stream failure
 - 💾 Remembers last station and settings
 - 🌏 Cross-platform (Windows/Linux/macOS)
@@ -22,14 +23,18 @@ A Radiko Japanese internet radio player written in Go with an interactive TUI.
 
 ```
 📻 Radiko  🔊 80%
-  北海道 青森 岩手 [東京] 神奈川  [13/47]
+  ◀ 埼玉 千葉 [東京] 神奈川 新潟 ▶ [13/47]
 ──────────────────────────────────────────────
   TBSラジオ TBS
-▶ 文化放送 QRR
+ ▶ 文化放送 QRR 
   ニッポン放送 LFR
+  ラジオNIKKEI第1 RN1
+  ラジオNIKKEI第2 RN2
+  ↓ さらに表示
+
 ──────────────────────────────────────────────
-▶ 文化放送 QRR  ♪ 大竹まことゴールデンラジオ
-↑↓ 選択  Enter 再生  ←→ 地域切替  Esc 終了
+▶ 文化放送 QRR  ♪ 大竹まことゴールデンラジオ  ⏺ 録音中 02:15
+↑↓ 選択  Enter 再生  ←→ 地域切替  +- 音量  m ミュート  s 停止  r 再接続  Esc 終了
 ```
 
 ## 📦 Installation
@@ -49,7 +54,7 @@ go build -o radiko
 
 ## ⚠️ Requirements
 
-**ffmpeg is required** for audio decoding.
+**ffmpeg is required** for audio decoding and recording.
 
 ```bash
 # Windows (Chocolatey)
@@ -78,8 +83,15 @@ brew install ffmpeg
 | +/- | Volume up/down |
 | 0-9 | Set volume level |
 | m | Toggle mute |
+| s | Start/Stop recording |
 | r | Reconnect |
 | Esc | Exit |
+
+### Recording
+
+Press `s` to start/stop recording the current stream. Recordings are saved to your Downloads folder as AAC files with the format: `radiko_StationName_YYYYMMDD_HHMMSS.aac`
+
+When recording a different station than currently playing, the station name will be shown in brackets: `⏺ 録音中[StationName] MM:SS`
 
 ## 📖 Documentation
 

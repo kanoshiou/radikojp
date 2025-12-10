@@ -94,9 +94,9 @@ jobs:
             radiko-macos-arm64
             checksums.txt
           body: |
-            ## Radiko JP Player ${{ steps.get_version.outputs.VERSION }}
+            ## Radiko TUI ${{ steps.get_version.outputs.VERSION }}
             
-            A Radiko Japanese internet radio player with an interactive Terminal UI.
+            A Terminal User Interface (TUI) for streaming Radiko Japanese internet radio.
             
             ### ✨ Features
             

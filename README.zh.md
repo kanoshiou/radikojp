@@ -1,8 +1,8 @@
-# Radiko JP Player
+# Radiko TUI
 
 [English](README.md) | [日本語](README.ja.md) | **[中文](README.zh.md)**
 
-一个用 Go 语言编写的 Radiko 日本网络电台播放器，带有交互式 TUI 界面。
+一个用 Go 语言编写的 Radiko 日本网络电台终端用户界面（TUI）播放器。
 
 [![Release](https://img.shields.io/github/v/release/kanoshiou/radiko-tui)](https://github.com/kanoshiou/radiko-tui/releases)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/kanoshiou/radiko-tui)](https://go.dev/)
@@ -14,6 +14,7 @@
 - 🗾 支持日本全部 47 个都道府县
 - 🖥️ 交互式终端界面 (TUI)
 - 🔊 音量控制，支持静音
+- ⏺️ 录制流媒体为 AAC 文件
 - 🔄 流媒体中断时自动重连
 - 💾 记住上次播放的电台和设置
 - 🌏 跨平台支持 (Windows/Linux/macOS)
@@ -22,14 +23,18 @@
 
 ```
 📻 Radiko  🔊 80%
-  北海道 青森 岩手 [東京] 神奈川  [13/47]
+  ◀ 埼玉 千葉 [東京] 神奈川 新潟 ▶ [13/47]
 ──────────────────────────────────────────────
   TBSラジオ TBS
-▶ 文化放送 QRR
+ ▶ 文化放送 QRR 
   ニッポン放送 LFR
+  ラジオNIKKEI第1 RN1
+  ラジオNIKKEI第2 RN2
+  ↓ さらに表示
+
 ──────────────────────────────────────────────
-▶ 文化放送 QRR  ♪ 大竹まことゴールデンラジオ
-↑↓ 選択  Enter 再生  ←→ 地域切替  Esc 終了
+▶ 文化放送 QRR  ♪ 大竹まことゴールデンラジオ  ⏺ 録音中 02:15
+↑↓ 選択  Enter 再生  ←→ 地域切替  +- 音量  m ミュート  s 停止  r 再接続  Esc 終了
 ```
 
 ## 📦 安装
@@ -49,7 +54,7 @@ go build -o radiko
 
 ## ⚠️ 依赖要求
 
-音频解码需要 **ffmpeg**。
+音频解码和录音需要 **ffmpeg**。
 
 ```bash
 # Windows (Chocolatey)
@@ -78,8 +83,15 @@ brew install ffmpeg
 | +/- | 调节音量 |
 | 0-9 | 设置音量级别 |
 | m | 静音切换 |
+| s | 开始/停止录音 |
 | r | 重新连接 |
 | Esc | 退出 |
+
+### 录音功能
+
+按 `s` 键可以开始/停止录制当前播放的流媒体。录音文件会保存到下载文件夹，文件名格式为：`radiko_电台名_YYYYMMDD_HHMMSS.aac`
+
+当录制的电台与当前播放的电台不同时，电台名会显示在括号中：`⏺ 録音中[电台名] MM:SS`
 
 ## 📖 文档
 
