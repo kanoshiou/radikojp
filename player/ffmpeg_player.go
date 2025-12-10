@@ -404,8 +404,7 @@ func (p *FFmpegPlayer) Reconnect() error {
 
 // getDownloadsDir returns the user's Downloads directory
 func getDownloadsDir() string {
-	var homeDir string
-	homeDir = os.Getenv("USERPROFILE")
+	homeDir, _ := os.UserHomeDir()
 	return filepath.Join(homeDir, "Downloads")
 }
 
