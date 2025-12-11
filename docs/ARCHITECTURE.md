@@ -176,7 +176,8 @@ oto Library → Audio Output
 
 Config file location:
 - **Windows**: `%APPDATA%\radiko-tui\config.json`
-- **Linux/macOS**: `~/.config/radiko-tui/config.json`
+- **macOS**: `~/Library/Application Support/radiko-tui/config.json`
+- **Linux**: `~/.config/radiko-tui/config.json`
 
 ## Performance
 

@@ -141,7 +141,8 @@ jobs:
             
             Settings are saved automatically:
             - **Windows**: `%APPDATA%\radiko-tui\config.json`
-            - **Linux/macOS**: `~/.config/radiko-tui/config.json`
+            - **macOS**: `~/Library/Application Support/radiko-tui/config.json`
+            - **Linux**: `~/.config/radiko-tui/config.json`
             
             ### ✅ Checksums
             
