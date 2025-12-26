@@ -25,11 +25,13 @@ radiko-tui/
 │   ├── region.go                 # Region/Area definitions
 │   └── station.go                # Station data models
 ├── player/
-│   └── ffmpeg_player.go          # FFmpeg-based audio player
+│   ├── ffmpeg_player.go          # FFmpeg-based audio player (with audio)
+│   └── ffmpeg_player_noaudio.go  # Stub player (noaudio build)
 ├── server/
-│   └── server.go                 # HTTP streaming server (server mode)
+│   └── server.go                 # HTTP streaming server (StreamManager)
 ├── tui/
-│   └── tui.go                    # Terminal UI (bubbletea)
+│   ├── tui.go                    # Terminal UI (with audio)
+│   └── tui_noaudio.go            # Stub TUI (noaudio build)
 ├── main.go                       # Main program entry
 ├── config.example.go             # Configuration example
 ├── go.mod                        # Go module definition
@@ -118,18 +120,53 @@ Interactive terminal interface using bubbletea:
 
 ### 4. Server Module (server/server.go)
 
-HTTP streaming server for headless operation:
-- Single endpoint: `GET /api/play/:stationID`
-- Auto area detection from station ID
-- Streams AAC audio directly to HTTP clients
-- Auto-disconnects from Radiko when client disconnects
-- Uses request context for connection lifecycle
+HTTP streaming server for headless operation with advanced stream management:
+
+#### Architecture
+```
+StreamManager
+    └── StationStream (per station)
+            ├── ffmpeg process
+            ├── broadcast channel
+            └── clients[] (multiple HTTP connections)
+```
+
+#### Features
+- **Multi-client support**: Multiple clients can listen to the same station, sharing one ffmpeg instance
+- **Smart ffmpeg reuse**: When a client disconnects, ffmpeg keeps running for a configurable grace period
+- **Automatic reconnection**: If a client reconnects within the grace period, the existing stream is reused
+- **Efficient broadcasting**: Data is read once from ffmpeg and broadcast to all connected clients
+
+#### API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/play/{stationID}` | Stream audio from the specified station |
+| `HEAD /api/play/{stationID}` | Get stream headers without starting playback |
+| `GET /api/status` | Get JSON status of active streams |
+
+#### Command Line Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `-server` | false | Enable server mode |
+| `-port` | 8080 | HTTP server port |
+| `-grace` | 10 | Seconds to keep ffmpeg alive after last client disconnects |
 
 Usage:
 ```bash
-radiko-tui -server -port 8080
+radiko-tui -server -port 8080 -grace 30
 # Stream with: vlc http://localhost:8080/api/play/QRR
 ```
+
+#### Server-Only Build (noaudio)
+
+For headless Linux servers without audio support, build with the `noaudio` tag:
+```bash
+go build -tags noaudio -o radiko-server
+```
+
+This excludes the oto audio library and only supports server mode.
 
 ### 5. Configuration (config/config.go)
 

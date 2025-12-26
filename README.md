@@ -100,6 +100,32 @@ Then stream in VLC or any audio player:
 vlc http://localhost:8080/api/play/QRR
 ```
 
+#### Server Mode Features
+
+- **Multi-client support**: Multiple clients can listen to the same station, sharing one ffmpeg instance
+- **Smart ffmpeg reuse**: When a client disconnects, ffmpeg keeps running for a grace period (default 10 seconds)
+- **Automatic reconnection**: If a client reconnects within the grace period, the existing stream is reused instantly
+
+#### Server Options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `-port` | 8080 | HTTP server port |
+| `-grace` | 10 | Seconds to keep ffmpeg alive after last client disconnects |
+
+Example with custom grace period:
+
+```bash
+./radiko-tui -server -port 8080 -grace 30
+```
+
+#### Server API Endpoints
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /api/play/{stationID}` | Stream audio from the specified station |
+| `GET /api/status` | Get JSON status of active streams |
+
 ### Controls
 
 | Key | Action |
