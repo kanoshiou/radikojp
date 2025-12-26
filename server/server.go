@@ -135,18 +135,25 @@ func (s *Server) handlePlay(w http.ResponseWriter, r *http.Request, stationID st
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Accept-Ranges", "none")
+	w.Header().Set("X-Accel-Buffering", "no") // Disable Nginx buffering
 	w.Header().Set("icy-name", fmt.Sprintf("Radiko - %s", stationID))
 	w.Header().Set("icy-genre", "Radio")
+
+	// Send headers immediately to prevent client timeout
+	w.WriteHeader(http.StatusOK)
+	if f, ok := w.(http.Flusher); ok {
+		f.Flush()
+	}
 
 	// Subscribe to stream
 	err := s.streamManager.Subscribe(r.Context(), w, stationID, clientID)
 	if err != nil {
 		log.Printf("❌ ストリームエラー [%s]: %v", clientID, err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		return // Subscribe already handles error writing if possible, but here we can't write error if headers sent.
+		// If headers are sent, we can't send 500. We just stop.
 	}
 
-	log.Printf("👋 クライアント切断: %s", clientID)
+	// Client disconnected (logging handled in Subscribe/AddClient)
 }
 
 // ============================================================================
@@ -460,9 +467,9 @@ func (ss *StationStream) AddClient(ctx context.Context, w http.ResponseWriter, c
 	// Wait for client disconnect or stream end
 	select {
 	case <-ctx.Done():
-		// Client disconnected
+		log.Printf("👋 クライアント切断 (ユーザー切断): %s", clientID)
 	case <-client.done:
-		// Write error occurred
+		log.Printf("⚠️ クライアント切断 (書き込みエラー): %s", clientID)
 	}
 
 	ss.removeClient(clientID)
