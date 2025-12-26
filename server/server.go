@@ -327,6 +327,8 @@ func (ss *StationStream) startFFmpeg(streamURL, authToken string) error {
 		"-reconnect_delay_max", "10",
 		"-timeout", "30000000",
 		"-headers", fmt.Sprintf("X-Radiko-AuthToken: %s\r\n", authToken),
+		"-analyzeduration", "1000000", // Reduce analysis time to 1s (default 5s)
+		"-probesize", "1000000",       // Reduce probe size to 1MB (default 5MB)
 		"-i", streamURL,
 		"-c:a", "copy",
 		"-f", "adts",
