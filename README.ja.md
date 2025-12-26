@@ -53,6 +53,16 @@ go mod tidy
 go build -o radiko
 ```
 
+### サーバー専用ビルド（オーディオ依存なし）
+
+オーディオサポートのないLinuxサーバー向け：
+
+```bash
+go build -tags noaudio -o radiko-server
+```
+
+このビルドはオーディオ再生依存関係（oto）を除外し、サーバーモード（`-server`フラグ）のみをサポートします。
+
 ## ⚠️ 必要条件
 
 音声デコードと録音には **ffmpeg が必要** です。

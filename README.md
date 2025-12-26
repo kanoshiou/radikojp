@@ -53,6 +53,16 @@ go mod tidy
 go build -o radiko
 ```
 
+### Server-Only Build (No Audio Dependencies)
+
+For headless Linux servers without audio support:
+
+```bash
+go build -tags noaudio -o radiko-server
+```
+
+This build excludes audio playback dependencies (oto) and only supports server mode (`-server` flag).
+
 ## ⚠️ Requirements
 
 **ffmpeg is required** for audio decoding and recording.

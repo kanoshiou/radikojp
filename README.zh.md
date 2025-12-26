@@ -53,6 +53,16 @@ go mod tidy
 go build -o radiko
 ```
 
+### 纯服务器构建（无音频依赖）
+
+对于无音频支持的 Linux 服务器：
+
+```bash
+go build -tags noaudio -o radiko-server
+```
+
+此构建排除音频播放依赖（oto），仅支持服务器模式（`-server` 参数）。
+
 ## ⚠️ 依赖要求
 
 音频解码和录音需要 **ffmpeg**。
