@@ -13,6 +13,7 @@ A Terminal User Interface (TUI) for streaming Radiko Japanese internet radio, wr
 - 🎵 Stream live Radiko radio stations
 - 🗾 Support for all 47 Japanese prefectures
 - 🖥️ Interactive terminal UI (TUI)
+- 🌐 Server mode for HTTP streaming
 - 🔊 Volume control with mute support
 - ⏺️ Record streams to AAC files
 - 🔄 Auto-reconnect on stream failure
@@ -69,8 +70,24 @@ brew install ffmpeg
 
 ## 🚀 Usage
 
+### TUI Mode (Default)
+
 ```bash
-./radiko
+./radiko-tui
+```
+
+### Server Mode
+
+Run as an HTTP streaming server:
+
+```bash
+./radiko-tui -server -port 8080
+```
+
+Then stream in VLC or any audio player:
+
+```bash
+vlc http://localhost:8080/api/play/QRR
 ```
 
 ### Controls

@@ -166,3 +166,53 @@ func getProgramForDate(stationID, dateStr, timeStr string) (*model.Program, erro
 
 	return nil, nil
 }
+
+// BatchStationResponse represents the response from batchGetStations API
+type BatchStationResponse struct {
+	OK          bool             `json:"ok"`
+	StationList []BatchStationInfo `json:"stationList"`
+}
+
+// BatchStationInfo represents station info from batch API
+type BatchStationInfo struct {
+	ID              string   `json:"id"`
+	Name            string   `json:"name"`
+	PrefecturesList []string `json:"prefecturesList"`
+}
+
+// GetStationArea retrieves the area ID for a given station
+// Returns the first available prefecture from prefecturesList
+func GetStationArea(stationID string) (string, error) {
+	url := fmt.Sprintf("https://radiko.jp/api/stations/batchGetStations?stationId=%s", stationID)
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch station info: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("failed to fetch station info: status code %d", resp.StatusCode)
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	var batchResp BatchStationResponse
+	if err := json.Unmarshal(data, &batchResp); err != nil {
+		return "", fmt.Errorf("failed to parse station info JSON: %w", err)
+	}
+
+	if !batchResp.OK || len(batchResp.StationList) == 0 {
+		return "", fmt.Errorf("station not found: %s", stationID)
+	}
+
+	prefectures := batchResp.StationList[0].PrefecturesList
+	if len(prefectures) == 0 {
+		return "", fmt.Errorf("no available prefectures for station: %s", stationID)
+	}
+
+	return prefectures[0], nil
+}
+

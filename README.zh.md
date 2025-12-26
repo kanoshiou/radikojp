@@ -13,6 +13,7 @@
 - 🎵 实时播放 Radiko 电台
 - 🗾 支持日本全部 47 个都道府县
 - 🖥️ 交互式终端界面 (TUI)
+- 🌐 服务器模式支持 HTTP 流媒体
 - 🔊 音量控制，支持静音
 - ⏺️ 录制流媒体为 AAC 文件
 - 🔄 流媒体中断时自动重连
@@ -69,8 +70,24 @@ brew install ffmpeg
 
 ## 🚀 使用方法
 
+### TUI 模式（默认）
+
 ```bash
-./radiko
+./radiko-tui
+```
+
+### 服务器模式
+
+作为 HTTP 流媒体服务器运行：
+
+```bash
+./radiko-tui -server -port 8080
+```
+
+然后在 VLC 或其他播放器中播放：
+
+```bash
+vlc http://localhost:8080/api/play/QRR
 ```
 
 ### 快捷键

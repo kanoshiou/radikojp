@@ -26,6 +26,8 @@ radiko-tui/
 │   └── station.go                # Station data models
 ├── player/
 │   └── ffmpeg_player.go          # FFmpeg-based audio player
+├── server/
+│   └── server.go                 # HTTP streaming server (server mode)
 ├── tui/
 │   └── tui.go                    # Terminal UI (bubbletea)
 ├── main.go                       # Main program entry
@@ -94,6 +96,7 @@ Communicates with Radiko services:
 - `GetStations()`: Fetches station list for a region
 - `GetStreamURLs()`: Gets streaming URLs for a station
 - `GetCurrentProgram()`: Retrieves current program info
+- `GetStationArea()`: Gets area ID for a station (auto-detection)
 
 ### 2. Player Module (player/ffmpeg_player.go)
 
@@ -113,7 +116,22 @@ Interactive terminal interface using bubbletea:
 - Current program display
 - Keyboard navigation
 
-### 4. Configuration (config/config.go)
+### 4. Server Module (server/server.go)
+
+HTTP streaming server for headless operation:
+- Single endpoint: `GET /api/play/:stationID`
+- Auto area detection from station ID
+- Streams AAC audio directly to HTTP clients
+- Auto-disconnects from Radiko when client disconnects
+- Uses request context for connection lifecycle
+
+Usage:
+```bash
+radiko-tui -server -port 8080
+# Stream with: vlc http://localhost:8080/api/play/QRR
+```
+
+### 5. Configuration (config/config.go)
 
 Persistent user preferences:
 - Last played station
@@ -121,7 +139,7 @@ Persistent user preferences:
 - Selected region
 - Auto-saved on changes
 
-### 5. Region/Device Models (model/)
+### 6. Region/Device Models (model/)
 
 - **region.go**: All 47 Japanese prefectures with IDs
 - **device.go**: Random Android device generation for auth
