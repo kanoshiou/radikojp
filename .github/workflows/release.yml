@@ -18,18 +18,28 @@ jobs:
             goos: windows
             goarch: amd64
             output: radiko-windows-amd64.exe
+            tags: ""
           - os: ubuntu-latest
             goos: linux
             goarch: amd64
             output: radiko-linux-amd64
+            tags: ""
+          - os: ubuntu-latest
+            goos: linux
+            goarch: amd64
+            output: radiko-linux-server-amd64
+            tags: "noaudio"
+            cgo_enabled: "0"
           - os: macos-latest
             goos: darwin
             goarch: amd64
             output: radiko-macos-amd64
+            tags: ""
           - os: macos-latest
             goos: darwin
             goarch: arm64
             output: radiko-macos-arm64
+            tags: ""
     
     runs-on: ${{ matrix.os }}
     
@@ -43,17 +53,26 @@ jobs:
           go-version-file: 'go.mod'
 
       - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && matrix.tags != 'noaudio'
         run: |
           sudo apt-get update
           sudo apt-get install -y libasound2-dev
 
-      - name: Build
+      - name: Build (with audio)
+        if: matrix.tags == ''
         env:
           GOOS: ${{ matrix.goos }}
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 1
         run: go build -ldflags="-s -w" -o ${{ matrix.output }}
+
+      - name: Build (noaudio/server-only)
+        if: matrix.tags == 'noaudio'
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: go build -tags noaudio -ldflags="-s -w" -o ${{ matrix.output }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v6
@@ -90,6 +109,7 @@ jobs:
           files: |
             radiko-windows-amd64.exe
             radiko-linux-amd64
+            radiko-linux-server-amd64
             radiko-macos-amd64
             radiko-macos-arm64
             checksums.txt
@@ -103,6 +123,7 @@ jobs:
             - 🎵 Stream live Radiko radio stations
             - 🗾 Support for all 47 Japanese prefectures
             - 🖥️ Interactive terminal UI (TUI)
+            - 🌐 Server mode for HTTP streaming
             - 🔊 Volume control with mute & precise adjustment
             - 🔄 Auto-reconnect on stream failure
             - 💾 Remembers last station, region, and settings
@@ -111,10 +132,14 @@ jobs:
             
             Choose the version for your system:
             
+            #### TUI Mode (with audio)
             - **Windows (x64)**: `radiko-windows-amd64.exe`
             - **Linux (x64)**: `radiko-linux-amd64`
             - **macOS (Intel)**: `radiko-macos-amd64`
             - **macOS (Apple Silicon)**: `radiko-macos-arm64`
+            
+            #### Server Mode Only (no audio dependencies)
+            - **Linux Server (x64)**: `radiko-linux-server-amd64` - For headless servers
             
             ### ⚠️ Requirements
             
